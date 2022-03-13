@@ -43,7 +43,7 @@
         <!--        <option value="1.5">데모닉</option>-->
         <!--        <option value="2.3">대마법사</option>-->
         <option value="2.2">고대,원시</option>
-        <option value="2.30">이모탈</option>
+        <option value="2.3">이모탈</option>
       </select>
     </td>
     <td v-show="job===2">
