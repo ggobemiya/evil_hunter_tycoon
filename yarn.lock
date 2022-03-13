@@ -2627,6 +2627,11 @@
   dependencies:
     "ms" "2.0.0"
 
+"decimal.js@^10.3.1":
+  "integrity" "sha512-V0pfhfr8suzyPGOx3nmq4aHqabehUZn6Ch9kyFpV79TGDTWFmHqUqXdabR7QHqxzrYolF4+tVmJhUG4OURg5dQ=="
+  "resolved" "https://registry.npmjs.org/decimal.js/-/decimal.js-10.3.1.tgz"
+  "version" "10.3.1"
+
 "deep-equal@^1.0.1":
   "integrity" "sha512-yd9c5AdiqVcR+JjcwUQb9DkhJc8ngNr0MahEBGvDiJw8puWab2yZlh+nkasOnZP+EGTAP6rRp2JzJhJZzvNF8g=="
   "resolved" "https://registry.npmjs.org/deep-equal/-/deep-equal-1.1.1.tgz"

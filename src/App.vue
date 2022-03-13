@@ -1,5 +1,15 @@
 <template>
-  <a href="/"><img alt="evt_title" src="./assets/eht_title.png"></a>
+  <div v-if="isOpened == true" class="black-bg" @click="isOpened=false">
+    <div class="white-bg">
+      <h4>공속 계산식</h4>
+      <p>최종 공속 =
+        무기 공속 * (1 - 스탯공속 - 성격공속 - 비법공속 - 연합공속 - 장비공속) / (1 + 퓨리공속증가량 + 퀴큰공속증가량)</p>
+      <p>{{ final_speed }} =
+        {{ weapon_speed }} * (1 - {{ stat }} - {{ personality }} - {{ secret / 100 }} - {{ union_speed / 100 }} -
+        {{ equip_speed / 100 }}) / (1 + {{ fury - 1 }} + {{ quicken - 1 }})</p>
+    </div>
+  </div>
+  <a href="/evil_hunter_tycoon)"><img alt="evt_title" src="./assets/eht_title.png"></a>
   <h2>이블 헌터 타이쿤 공속 계산기</h2>
   <table>
     <thead>
@@ -9,7 +19,7 @@
     </thead>
     <tbody>
     <td>
-      <select v-model.trim.number="job">
+      <select v-model.trim.number="job" @change="change_job">
         <option disabled value="">선택</option>
         <option value="0">버서커</option>
         <option value="1">소서러</option>
@@ -17,44 +27,45 @@
         <option value="3">팔라딘</option>
       </select>
     </td>
+    <td v-show="job===''"></td>
     <td v-show="job===0">
-      <select v-model.trim.number="weapon_speed" @change="cal">
+      <select v-model.trim.number="weapon_speed" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
-        <option value="1.7">초월한 일격필살</option>
-        <option value="1.3">초월한 피의 광기</option>
-        <option value="2">초월한 고대의 도끼</option>
-        <option value="2">초월한 원시의 대검</option>
+        <!--        <option value="1.7">일격필살</option>-->
+        <!--        <option value="1.3">피의 광기</option>-->
+        <option value="2">고대,원시</option>
+        <option value="2.2">발할라</option>
       </select>
     </td>
     <td v-show="job===1">
-      <select v-model.trim.number="weapon_speed" @change="cal">
+      <select v-model.trim.number="weapon_speed" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
-        <option value="1.5">초월한 데모닉</option>
-        <option value="2.3">초월한 대마법사의 손아귀</option>
-        <option value="2.2">초월한 고대의 지팡이</option>
-        <option value="2.2">초월한 원시의 지팡이</option>
+        <!--        <option value="1.5">데모닉</option>-->
+        <!--        <option value="2.3">대마법사</option>-->
+        <option value="2.2">고대,원시</option>
+        <option value="2.30">이모탈</option>
       </select>
     </td>
     <td v-show="job===2">
-      <select v-model.trim.number="weapon_speed" @change="cal">
+      <select v-model.trim.number="weapon_speed" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
-        <option value="2.1">초월한 삼위일체의 활</option>
-        <option value="1.5">초월한 백발백중</option>
-        <option value="1.8">초월한 고대의 활</option>
-        <option value="1.8">초월한 원시의 활</option>
+        <!--        <option value="2.1">삼위일체</option>-->
+        <!--        <option value="1.5">백발백중</option>-->
+        <option value="1.8">고대,원시</option>
+        <option value="2">비자야</option>
       </select>
     </td>
     <td v-show="job===3">
-      <select v-model.trim.number="weapon_speed" @change="cal">
+      <select v-model.trim.number="weapon_speed" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
-        <option value="2.5">초월한 오딘의 망치</option>
-        <option value="2">초월한 신의 격노</option>
-        <option value="2.4">초월한 고대의 망치</option>
-        <option value="2.4">초월한 원시의 망치</option>
+        <!--        <option value="2.5">오딘의 망치</option>-->
+        <!--        <option value="2">신의 격노</option>-->
+        <option value="2.4">고대,원시</option>
+        <option value="2.5">묠니르</option>
       </select>
     </td>
     <td>
-      <select v-model.trim.number="stat" @change="cal">
+      <select v-model.trim.number="stat" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
         <option value="0">회색</option>
         <option value="0.1">파란색</option>
@@ -63,7 +74,7 @@
       </select>
     </td>
     <td>
-      <select v-model.trim.number="personality" @change="cal">
+      <select v-model.trim.number="personality" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
         <option value="0">효과 없음</option>
         <option value="-0.1">둔한</option>
@@ -72,13 +83,15 @@
       </select>
     </td>
     <td>
-      <input v-model.trim.number="secret" max="10" min="0" placeholder="입력(%)" step="0.1" type="number" @input="cal">
+      <input v-model.trim.number="secret" max="10" min="0" onfocus="this.value=''" placeholder="입력(%)" step="0.1"
+             type="number" @input="weapon_speed_cal">
     </td>
     <td>
-      <input v-model.trim.number="union_speed" max="5" min="0" placeholder="입력(%)" type="number" @input="cal">
+      <input v-model.trim.number="union_speed" max="5" min="0" onfocus="this.value=''" placeholder="입력(%)" type="number"
+             @input="weapon_speed_cal">
     </td>
     <td>
-      <select v-model.trim.number="quicken" @change="cal">
+      <select v-model.trim.number="quicken" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
         <option value="1">Lv.0</option>
         <option value="1.1">Lv.1</option>
@@ -89,23 +102,39 @@
       </select>
     </td>
     <td>
-      <select v-model.trim.number="fury" @change="cal">
+      <select v-model.trim.number="fury" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
         <option value="1">Lv.0</option>
         <option value="2.38">Lv.1</option>
-        <option value="4">Lv.10(버서커)</option>
+        <option value="4">Lv.10</option>
       </select>
     </td>
     </tbody>
   </table>
   <div class="equip">
     <span>룬, 장비 공속: </span>
-    <input v-model.trim.number="equip_speed" max="100" min="0" placeholder="입력(%)" type="number" @input="cal">
+    <input v-model.trim.number="equip_speed" max="100" min="0" placeholder="입력(%)" type="number"
+           @input="final_speed_cal">
   </div>
   <div class="final">
-    <span>최종 공속: </span>
-    <span>{{ final_speed }}</span>
+    <span @click="isOpened=true">최종 공속: </span>
+    <input v-model.trim.number="final_speed" max="3" min="0.25" placeholder="입력(%)" step="0.01" type="number"
+           @input="weapon_speed_cal">
+    <span class="specific" @click="isOpened=true">*클릭시 세부정보</span>
   </div>
+  <ol>
+    <h3>⭐ ️참고</h3>
+    <li>직업을 선택하세요.</li>
+    <li>무기, 스탯, 성격, 퀴큰, 퓨리를 선택 / 비법, 연합공속을 입력하세요.</li>
+    <li><span class="final_inline">최종 공속</span> 0.25를 기준으로 <span class="equip_inline">룬, 장비 공속</span>이 계산됩니다. <span
+        class="final_inline">최종 공속</span>
+      수정도 가능합니다.
+    </li>
+    <li><span class="equip_inline">룬, 장비 공속</span> 수정 시 그에 따른 <span class="final_inline">최종 공속</span>이 계산됩니다.</li>
+    <li>정확도를 위해서 반올림 안했습니다.</li>
+    <li>ex) <span class="equip_inline">룬, 장비 공속</span>이 82.955면 83을 맞춰야 합니다.</li>
+    <li>ex) <span class="final_inline">최종 공속</span>이 0.255면 인게임 표기는 0.25지만 초당 공격력은 0.255로 계산됩니다.</li>
+  </ol>
 </template>
 
 <script>
@@ -113,31 +142,77 @@ export default {
   name: 'App',
   data() {
     return {
-      job: 0,
+      job: '',
       weapon_speed: '',
-      stat: 0,
-      personality: 0,
-      secret: 0,
-      union_speed: 0,
-      quicken: 1,
-      fury: 1,
-      equip_speed: 0,
-      final_speed: 0,
+      stat: '',
+      personality: '',
+      secret: '',
+      union_speed: '',
+      quicken: '',
+      fury: '',
+      equip_speed: '',
+      final_speed: '',
+      isOpened: false,
       items: ['직업', '무기', '공속스탯', '성격', '비법', '연합공속', '퀴큰', '퓨리']
     };
   }
   ,
   components: {},
   methods: {
-    cal: function () {
-      let final_speed = this.weapon_speed
+    change_job: function () {
+      this.job_init(this.job);
+    },
+    job_init: function (job) {
+      if (job === 0) {
+        this.job = 0;
+        this.weapon_speed = 2;
+        this.quicken = 1;
+        this.fury = 4;
+        this.final_speed = 0.25;
+        this.weapon_speed_cal();
+      } else if (job === 1) {
+        this.job = 1;
+        this.weapon_speed = 2.2;
+        this.quicken = 1.5;
+        this.fury = 1;
+        this.final_speed = 0.25;
+        this.weapon_speed_cal();
+      } else if (job === 2) {
+        this.job = 2;
+        this.weapon_speed = 1.8;
+        this.quicken = 1.5;
+        this.fury = 1;
+        this.final_speed = 0.25;
+        this.weapon_speed_cal();
+      } else if (job === 3) {
+        this.job = 3;
+        this.weapon_speed = 2.4;
+        this.quicken = 1.5;
+        this.fury = 1;
+        this.final_speed = 0.25;
+        this.weapon_speed_cal();
+      }
+    },
+    weapon_speed_cal: function () {
+      let equip_speed
+          = (1.0 - this.stat - this.personality - this.secret / 100 - this.union_speed / 100
+          - this.final_speed / this.weapon_speed * (1.0 + this.fury - 1.0 + this.quicken - 1.0)) * 100
+      if (equip_speed < 0) {
+        this.equip_speed = 0;
+      } else {
+        this.equip_speed = equip_speed.toFixed(3);
+      }
+    },
+    final_speed_cal: function () {
+      let final_speed =
+          this.weapon_speed
           * (1.0 - this.stat - this.personality - this.secret / 100 - this.union_speed / 100 - this.equip_speed / 100)
           / (1.0 + this.fury - 1.0 + this.quicken - 1.0)
-      final_speed = Math.round(final_speed * 1000) / 1000
+      // final_speed = final_speed * 1000 / 1000
       if (final_speed < 0.25) {
         this.final_speed = 0.250
       } else {
-        this.final_speed = final_speed
+        this.final_speed = final_speed.toFixed(3);
       }
     }
   }
@@ -166,6 +241,10 @@ table {
   border-collapse: collapse;
 }
 
+body {
+  margin: 0;
+}
+
 th {
   background: lightgrey;
 }
@@ -187,15 +266,20 @@ input {
   text-align: center;
 }
 
-.equip {
+.equip, .final {
   margin: 30px;
 }
 
-.final {
+.final, .final > input {
   color: darkred;
   font-size: 20px;
   font-weight: 900;
-  margin: 30px;
+}
+
+.equip, .equip > input {
+  color: darkblue;
+  font-size: 20px;
+  font-weight: 900;
 }
 
 
@@ -203,5 +287,45 @@ input {
   margin-right: 20px;
 }
 
+.black-bg {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  position: fixed;
+  padding: 20px;
+}
 
+.white-bg {
+  width: calc(100% - 40px - 40px);
+  position: absolute;
+  top: 30%;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.specific {
+  display: block;
+  font-size: 15px;
+  padding-right: 70px;
+}
+
+ol {
+  text-align: left;
+}
+
+h3 {
+  margin-bottom: 5px;
+}
+
+.final_inline {
+  font-weight: 700;
+  color: darkred;
+}
+
+.equip_inline {
+  font-weight: 700;
+  color: darkblue;
+}
 </style>
