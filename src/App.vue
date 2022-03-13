@@ -117,10 +117,11 @@
            @input="final_speed_cal">
   </div>
   <div class="final">
-    <span @click="isOpened=true">최종 공속: </span>
+    <span>최종 공속: </span>
     <input v-model.trim.number="final_speed" max="3" min="0.25" placeholder="입력(%)" step="0.01" type="number"
            @input="weapon_speed_cal">
-    <span class="specific" @click="isOpened=true">*클릭시 세부정보</span>
+    <br>
+    <button @click="isOpened=true">공속 계산 식</button>
   </div>
   <ol>
     <h3>⭐ ️참고</h3>
@@ -305,10 +306,8 @@ input {
   padding: 20px;
 }
 
-.specific {
-  display: block;
+button {
   font-size: 15px;
-  padding-right: 70px;
 }
 
 ol {
