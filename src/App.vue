@@ -9,7 +9,7 @@
         {{ equip_speed / 100 }}) / (1 + {{ fury - 1 }} + {{ quicken - 1 }})</p>
     </div>
   </div>
-  <a href="/evil_hunter_tycoon)"><img alt="evt_title" src="./assets/eht_title.png"></a>
+  <a href="/evil_hunter_tycoon"><img alt="evt_title" src="./assets/eht_title.png"></a>
   <h2>이블 헌터 타이쿤 공속 계산기</h2>
   <table>
     <thead>
