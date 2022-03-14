@@ -9,8 +9,13 @@
         {{ equip_speed / 100 }}) / (1 + {{ fury - 1 }} + {{ quicken - 1 }})</p>
     </div>
   </div>
-  <a href="/evil_hunter_tycoon"><img alt="evt_title" src="./assets/eht_title.png"></a>
-  <h2>이블 헌터 타이쿤 공속 계산기</h2>
+  <a href="/evil_hunter_tycoon"><img alt="evt_title" class="title_img" src="./assets/eht_title.png"></a>
+  <div>
+    <a class="hits" href="https://hits.sh/lubiksss.github.io/evil_hunter_tycoon/">
+      <img alt="Hits" src="https://hits.sh/lubiksss.github.io/evil_hunter_tycoon.svg?view=today-total"/>
+    </a>
+    <h2>이블 헌터 타이쿤 공속 계산기</h2>
+  </div>
   <table>
     <thead>
     <th v-for="item in items" :key="item">
@@ -121,7 +126,7 @@
     <input v-model.trim.number="final_speed" max="3" min="0.25" placeholder="입력(%)" step="0.01" type="number"
            @input="weapon_speed_cal">
     <br>
-    <button @click="isOpened=true">공속 계산 식</button>
+    <button @click="isOpened=true">공속 계산식</button>
   </div>
   <ol>
     <h3>⭐ ️참고</h3>
@@ -229,9 +234,6 @@ export default {
   color: #2c3e50;
 }
 
-img {
-  width: 100%;
-}
 
 table {
   display: table;
@@ -326,5 +328,13 @@ h3 {
 .equip_inline {
   font-weight: 700;
   color: darkblue;
+}
+
+.title_img {
+  width: 100%;
+}
+
+.hits {
+  float: right;
 }
 </style>
