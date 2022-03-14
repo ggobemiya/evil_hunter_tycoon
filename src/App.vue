@@ -9,14 +9,8 @@
         {{ equip_speed / 100 }}) / (1 + {{ fury - 1 }} + {{ quicken - 1 }})</p>
     </div>
   </div>
-  <a class="title_img" href="/evil_hunter_tycoon"><img alt="evt_title" src="./assets/eht_title.png"></a>
-  <div>
-    <span class="visitor_counter"><img
-        alt="visitor counter" src="https://www.cutercounter.com/hits.php?id=huxaopnc&nd=4&style=3"></span>
-    <!-- End of CuterCounter Code -->
-    <h2>이블 헌터 타이쿤 공속 계산기</h2>
-    <!-- Start of CuterCounter Code -->
-  </div>
+  <a href="/evil_hunter_tycoon"><img alt="evt_title" src="./assets/eht_title.png"></a>
+  <h2>이블 헌터 타이쿤 공속 계산기</h2>
   <table>
     <thead>
     <th v-for="item in items" :key="item">
@@ -235,7 +229,7 @@ export default {
   color: #2c3e50;
 }
 
-.title_img {
+img {
   width: 100%;
 }
 
@@ -332,9 +326,5 @@ h3 {
 .equip_inline {
   font-weight: 700;
   color: darkblue;
-}
-
-.visitor_counter {
-  float: right;
 }
 </style>
