@@ -251,11 +251,6 @@ body {
   margin: 0 auto;
 }
 
-@media (min-width: 600px) {
-  body {
-    width: 600px;
-  }
-}
 
 th {
   background: lightgrey;
@@ -348,11 +343,36 @@ h3 {
 }
 
 .maker {
+  box-sizing: border-box;
   width: 100%;
   padding: 5px;
   border-top: solid 1px;
   font-weight: 700;
   font-size: 13px;
   text-align: right;
+}
+
+@media (min-width: 600px) {
+  body {
+    width: 600px;
+  }
+
+  .black-bg {
+    box-sizing: border-box;
+    width: 600px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    position: fixed;
+    padding: 20px;
+  }
+
+  .white-bg {
+    width: calc(600px - 40px - 40px);
+    position: absolute;
+    top: 30%;
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+  }
 }
 </style>
