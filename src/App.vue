@@ -141,6 +141,9 @@
     <li>ex) <span class="equip_inline">룬, 장비 공속</span>이 82.955면 83을 맞춰야 합니다.</li>
     <li>ex) <span class="final_inline">최종 공속</span>이 0.255면 인게임 표기는 0.25지만 초당 공격력은 0.255로 계산됩니다.</li>
   </ol>
+  <div class="maker">
+    <span>제작) 벨 연합 가자미벨</span>
+  </div>
 </template>
 
 <script>
@@ -342,5 +345,14 @@ h3 {
 
 .hits {
   float: right;
+}
+
+.maker {
+  width: 100%;
+  padding: 5px;
+  border-top: solid 1px;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: right;
 }
 </style>
