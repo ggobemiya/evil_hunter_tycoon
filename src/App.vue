@@ -245,7 +245,13 @@ table {
 }
 
 body {
-  margin: 0;
+  margin: 0 auto;
+}
+
+@media (min-width: 600px) {
+  body {
+    width: 600px;
+  }
 }
 
 th {
