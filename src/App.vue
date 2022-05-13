@@ -112,6 +112,9 @@
         <option value="1">Lv.0</option>
         <option value="2.38">Lv.1</option>
         <option value="4">Lv.10</option>
+        <option value="4.18">Lv.11</option>
+        <option value="4.36">Lv.12</option>
+        <option value="4.54">Lv.13</option>
       </select>
     </td>
     </tbody>
@@ -132,6 +135,7 @@
     <h3>⭐ ️참고</h3>
     <li>직업을 선택하세요.</li>
     <li>무기, 스탯, 성격, 퀴큰, 퓨리를 선택 / 비법, 연합공속을 입력하세요.</li>
+    <li>퓨리룬 Lv1,2,3 장착시 퓨리 Lv11,12,13 선택하면 됩니다.</li>
     <li><span class="final_inline">최종 공속</span> 0.25를 기준으로 <span class="equip_inline">룬, 장비 공속</span>이 계산됩니다. <span
         class="final_inline">최종 공속</span>
       수정도 가능합니다.

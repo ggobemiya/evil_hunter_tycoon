@@ -12,7 +12,8 @@
     "decimal.js": "^10.3.1",
     "vue": "^3.2.13",
     "vue-range-slider": "^0.6.0",
-    "vue-slider-component": "^4.0.0-beta.4"
+    "vue-slider-component": "^4.0.0-beta.4",
+    "yarn": "^1.22.18"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",
