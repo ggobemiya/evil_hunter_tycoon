@@ -146,7 +146,7 @@
     <li>ex) <span class="final_inline">최종 공속</span>이 0.255면 인게임 표기는 0.25지만 초당 공격력은 0.255로 계산됩니다.</li>
   </ol>
   <div class="maker">
-    <span>제작) 벨 연합 가자미벨</span>
+    <span>제작) Andante An가자미</span>
   </div>
 </template>
 
