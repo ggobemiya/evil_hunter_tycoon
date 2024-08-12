@@ -39,7 +39,7 @@
         <!--        <option value="1.7">일격필살</option>-->
         <!--        <option value="1.3">피의 광기</option>-->
         <option value="2">고대,원시</option>
-        <option value="2.2">발할라</option>
+        <option value="2.2">콜로,월보</option>
       </select>
     </td>
     <td v-show="job===1">
@@ -48,7 +48,7 @@
         <!--        <option value="1.5">데모닉</option>-->
         <!--        <option value="2.3">대마법사</option>-->
         <option value="2.2">고대,원시</option>
-        <option value="2.3">이모탈</option>
+        <option value="2.3">콜로,월보</option>
       </select>
     </td>
     <td v-show="job===2">
@@ -57,7 +57,7 @@
         <!--        <option value="2.1">삼위일체</option>-->
         <!--        <option value="1.5">백발백중</option>-->
         <option value="1.8">고대,원시</option>
-        <option value="2">비자야</option>
+        <option value="2">콜로,월보</option>
       </select>
     </td>
     <td v-show="job===3">
@@ -66,7 +66,7 @@
         <!--        <option value="2.5">오딘의 망치</option>-->
         <!--        <option value="2">신의 격노</option>-->
         <option value="2.4">고대,원시</option>
-        <option value="2.5">묠니르</option>
+        <option value="2.5">콜로,월보</option>
       </select>
     </td>
     <td>
