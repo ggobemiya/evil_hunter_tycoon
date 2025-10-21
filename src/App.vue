@@ -3,9 +3,9 @@
     <div class="white-bg">
       <h4>공속 계산식</h4>
       <p>최종 공속 =
-        무기 공속 * (1 - 스탯공속 - 성격공속 - 비법공속 - 연합공속 - 장비공속) / (1 + 퓨리공속증가량 + 퀴큰공속증가량)</p>
+        무기 공속 * (1 - 스탯공속 - 성격공속 - 비법공속 - 연합공속 - 펫장비 - 장비공속) / (1 + 퓨리공속증가량 + 퀴큰공속증가량)</p>
       <p>{{ final_speed }} =
-        {{ weapon_speed }} * (1 - {{ stat }} - {{ personality }} - {{ secret / 100 }} - {{ union_speed / 100 }} -
+        {{ weapon_speed }} * (1 - {{ stat }} - {{ personality }} - {{ secret / 100 }} - {{ union_speed / 100 }} - {{ pet_equipment / 100 }} -
         {{ equip_speed / 100 }}) / (1 + {{ fury - 1 }} + {{ quicken - 1 }})</p>
     </div>
   </div>
@@ -96,6 +96,15 @@
              @input="weapon_speed_cal">
     </td>
     <td>
+      <select v-model.trim.number="pet_equipment" @change="weapon_speed_cal">
+        <option disabled value="">선택</option>
+        <option value="0">없음</option>
+        <option value="6">B</option>
+        <option value="9">A</option>
+        <option value="12">S</option>
+      </select>
+    </td>
+    <td>
       <select v-model.trim.number="quicken" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
         <option value="1">Lv.0</option>
@@ -165,8 +174,9 @@ export default {
       fury: '',
       equip_speed: '',
       final_speed: '',
+      pet_equipment: '',
       isOpened: false,
-      items: ['직업', '무기', '공속스탯', '성격', '비법', '연합공속', '퀴큰', '퓨리']
+      items: ['직업', '무기', '공속스탯', '성격', '비법', '연합공속', '펫장비', '퀴큰', '퓨리']
     };
   }
   ,
@@ -182,6 +192,7 @@ export default {
         this.quicken = 1;
         this.fury = 4;
         this.final_speed = 0.25;
+        this.pet_equipment = 0;
         this.weapon_speed_cal();
       } else if (job === 1) {
         this.job = 1;
@@ -189,6 +200,7 @@ export default {
         this.quicken = 1.5;
         this.fury = 1;
         this.final_speed = 0.25;
+        this.pet_equipment = 0;
         this.weapon_speed_cal();
       } else if (job === 2) {
         this.job = 2;
@@ -196,6 +208,7 @@ export default {
         this.quicken = 1.5;
         this.fury = 1;
         this.final_speed = 0.25;
+        this.pet_equipment = 0;
         this.weapon_speed_cal();
       } else if (job === 3) {
         this.job = 3;
@@ -203,12 +216,13 @@ export default {
         this.quicken = 1.5;
         this.fury = 1;
         this.final_speed = 0.25;
+        this.pet_equipment = 0;
         this.weapon_speed_cal();
       }
     },
     weapon_speed_cal: function () {
       let equip_speed
-          = (1.0 - this.stat - this.personality - this.secret / 100 - this.union_speed / 100
+          = (1.0 - this.stat - this.personality - this.secret / 100 - this.union_speed / 100 - this.pet_equipment / 100
           - this.final_speed / this.weapon_speed * (1.0 + this.fury - 1.0 + this.quicken - 1.0)) * 100
       if (equip_speed < 0) {
         this.equip_speed = 0;
@@ -219,7 +233,7 @@ export default {
     final_speed_cal: function () {
       let final_speed =
           this.weapon_speed
-          * (1.0 - this.stat - this.personality - this.secret / 100 - this.union_speed / 100 - this.equip_speed / 100)
+          * (1.0 - this.stat - this.personality - this.secret / 100 - this.union_speed / 100 - this.equip_speed / 100 - this.pet_equipment / 100)
           / (1.0 + this.fury - 1.0 + this.quicken - 1.0)
       // final_speed = final_speed * 1000 / 1000
       if (final_speed < 0.25) {
