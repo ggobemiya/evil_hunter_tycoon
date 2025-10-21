@@ -1,1 +1,1 @@
-build: deploy to github pages
+feat: update hits url and maker

@@ -11,8 +11,8 @@
   </div>
   <a href="/evil_hunter_tycoon"><img alt="evt_title" class="title_img" src="./assets/eht_title.png"></a>
   <div>
-    <a class="hits" href="https://hits.sh/lubiksss.github.io/evil_hunter_tycoon/">
-      <img alt="Hits" src="https://hits.sh/lubiksss.github.io/evil_hunter_tycoon.svg?view=today-total"/>
+    <a class="hits" href="https://hits.sh/ggobemiya.github.io/evil_hunter_tycoon/">
+      <img alt="Hits" src="https://hits.sh/ggobemiya.github.io/evil_hunter_tycoon.svg?view=today-total"/>
     </a>
     <h2>이블 헌터 타이쿤 공속 계산기</h2>
   </div>
@@ -156,6 +156,8 @@
   </ol>
   <div class="maker">
     <span>제작) Andante An가자미</span>
+    <br>
+    <span>수정) Bell 꼬뱀벨</span>
   </div>
 </template>
 
