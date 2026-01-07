@@ -30,6 +30,7 @@
         <option value="1">소서러</option>
         <option value="2">레인져</option>
         <option value="3">팔라딘</option>
+        <option value="4">다크나이트</option>
       </select>
     </td>
     <td v-show="job===''"></td>
@@ -42,7 +43,7 @@
         <option value="2.2">콜로,월보</option>
       </select>
     </td>
-    <td v-show="job===1">
+    <td v-show="job===1 || job===4">
       <select v-model.trim.number="weapon_speed" @change="weapon_speed_cal">
         <option disabled value="">선택</option>
         <!--        <option value="1.5">데모닉</option>-->
@@ -196,8 +197,8 @@ export default {
         this.final_speed = 0.25;
         this.pet_equipment = 0;
         this.weapon_speed_cal();
-      } else if (job === 1) {
-        this.job = 1;
+      } else if (job === 1 || job === 4) {
+        this.job = job;
         this.weapon_speed = 2.2;
         this.quicken = 1.5;
         this.fury = 1;
