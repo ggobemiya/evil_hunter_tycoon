@@ -164,153 +164,159 @@
   <div v-show="activeTab === 'move'">
     <table class="move-speed-table">
       <tbody>
-        <tr>
-          <td>헌터 등급 버프</td>
-          <td>
-            <select v-model.number="moveBuffs.hunterRank">
-              <option value="0">없음</option>
-              <option value="10">H</option>
-              <option value="20">L</option>
-              <option value="30">U</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>건물</td>
-          <td>
-            <select v-model.number="moveBuffs.building">
-              <option value="0">미적용</option>
-              <option value="50">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>코스튬 (옷+날개)</td>
-          <td>
-            <select v-model.number="moveBuffs.costume">
-              <option value="0">미적용</option>
-              <option value="60">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>인장</td>
-          <td>
-            <select v-model.number="moveBuffs.seal">
-              <option value="0">미적용</option>
-              <option value="20">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>라이딩</td>
-           <td>
-            <select v-model.number="moveBuffs.riding">
-              <option value="0">미적용</option>
-              <option value="30">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>비법</td>
-          <td>
-            <select v-model.number="moveBuffs.secret">
-              <option value="0">미적용</option>
-              <option value="15">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>룬</td>
-          <td>
-            <select v-model.number="moveBuffs.rune">
-              <option value="0">미적용</option>
-              <option value="12">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>이속신</td>
-          <td>
-            <select v-model.number="moveBuffs.boots">
-              <option value="0">미착용</option>
-              <option value="30">질풍신</option>
-              <option value="32">진 질풍신</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>개별 이속옵션</td>
-          <td>
-            <select v-model.number="moveBuffs.individual">
-              <option value="0">없음</option>
-              <option value="19">일반</option>
-              <option value="21">심연</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>라이딩 장비 (편자)</td>
-          <td>
-            <select v-model.number="moveBuffs.horseshoe">
-              <option value="0">없음</option>
-              <option value="15">B</option>
-              <option value="30">A</option>
-              <option value="45">S</option>
-            </select>
-          </td>
-        </tr>
-         <tr>
-          <td>성격 (달리기가 빠른)</td>
-          <td>
-            <select v-model.number="moveBuffs.personality">
-              <option value="0">미적용</option>
-              <option value="10">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>프로즌소울 (글레이셜 보우)</td>
-          <td>
-            <select v-model.number="moveBuffs.frozenSoul">
-              <option value="0">미적용</option>
-              <option value="80">적용</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td>대악마 (원시,태초,혼돈,심연 무기)</td>
-          <td>
-            <select v-model.number="moveBuffs.greatDemon">
-              <option value="0">미적용</option>
-              <option value="200">적용</option>
-            </select>
-          </td>
-        </tr>
+      <tr>
+        <td>헌터 등급 버프</td>
+        <td>
+          <select v-model.number="moveBuffs.hunterRank">
+            <option value="0">없음</option>
+            <option value="10">H (히로익)</option>
+            <option value="20">L (레전더리)</option>
+            <option value="30">U (울티메이트)</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>건물 (0 ~ 50)</td>
+        <td class="slider-cell">
+          <input type="range" min="0" max="50" step="1" v-model.number="moveBuffs.building">
+          <input type="number" min="0" max="50" v-model.number="moveBuffs.building" class="slider-input">
+        </td>
+      </tr>
+      <tr>
+        <td>코스튬 (옷)</td>
+        <td>
+          <select v-model.number="moveBuffs.clothes">
+            <option value="0">미적용</option>
+            <option value="40">적용</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>코스튬 (날개)</td>
+        <td>
+          <select v-model.number="moveBuffs.wings">
+            <option value="0">미적용</option>
+            <option value="20">적용</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>인장</td>
+        <td>
+          <select v-model.number="moveBuffs.seal">
+            <option value="0">미적용</option>
+            <option value="20">적용</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>라이딩</td>
+        <td>
+          <select v-model.number="moveBuffs.riding">
+            <option value="0">미적용</option>
+            <option value="30">적용</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>비법 (0 ~ 15)</td>
+        <td class="slider-cell">
+          <input type="range" min="0" max="15" step="1" v-model.number="moveBuffs.secret">
+          <input type="number" min="0" max="15" v-model.number="moveBuffs.secret" class="slider-input">
+        </td>
+      </tr>
+       <tr>
+        <td>룬</td>
+        <td><input type="number" v-model.number="moveBuffs.rune" placeholder="입력" class="full-width-input"></td>
+      </tr>
+      <tr>
+        <td>이속신</td>
+        <td><input type="number" v-model.number="moveBuffs.boots" placeholder="입력" class="full-width-input"></td>
+      </tr>
+      <tr>
+        <td>장비 이속 총합</td>
+        <td><input type="number" v-model.number="moveBuffs.equipmentTotal" placeholder="입력" class="full-width-input"></td>
+      </tr>
+      <tr>
+        <td>라이딩 장비 (편자)</td>
+        <td>
+          <select v-model.number="moveBuffs.horseshoe">
+            <option value="0">없음</option>
+            <option value="15">B</option>
+            <option value="30">A</option>
+            <option value="45">S</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>성격</td>
+        <td>
+          <select v-model.number="moveBuffs.personality">
+            <option value="0">없음</option>
+            <option value="10">달리기가 빠른</option>
+            <option value="7">영웅심리</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>프로즌소울 (글레이셜 보우)</td>
+        <td>
+          <select v-model.number="moveBuffs.frozenSoul">
+            <option value="0">미적용</option>
+            <option value="80">적용</option>
+          </select>
+        </td>
+      </tr>
+      <tr>
+        <td>대악마 (원시,태초,혼돈,심연 무기)</td>
+        <td>
+          <select v-model.number="moveBuffs.greatDemon">
+            <option value="0">미적용</option>
+            <option value="200">적용</option>
+          </select>
+        </td>
+      </tr>
       </tbody>
     </table>
     <div class="move-speed-results">
-        <h3>계산 결과</h3>
-        <div class="result-item">
-            <span class="label">총 이동속도 증가량:</span>
-            <span class="value">{{ totalMoveSpeed }}</span>
-        </div>
-        <div class="result-item">
-            <span class="label">질풍신 공격력 증폭 (최대 30%):</span>
-            <span class="value final-amp">{{ zephyrAmp }}%</span>
-        </div>
-        <div class="result-item">
-            <span class="label">진 질풍신 공격력 증폭 (최대 40%):</span>
-            <span class="value final-amp">{{ trueZephyrAmp }}%</span>
-        </div>
+      <h3>계산 결과</h3>
+      <div class="result-item">
+        <span class="label">총 이동속도 증가량 (합계):</span>
+        <span class="value">{{ totalMoveSpeed }}</span>
+      </div>
+      <div class="result-item">
+        <span class="label">질풍신 공격력 증폭 (최대 30%):</span>
+        <span class="value final-amp">{{ zephyrAmp }}%</span>
+      </div>
+      <div class="result-item">
+        <span class="label">진 질풍신 공격력 증폭 (최대 40%):</span>
+        <span class="value final-amp">{{ trueZephyrAmp }}%</span>
+      </div>
     </div>
-     <ol>
-      <h3>⭐ ️참고</h3>
-      <li>각 항목별 이동속도 증가 효과를 선택하세요.</li>
-       <li>'총 이동속도 증가량'은 선택한 모든 효과의 합입니다.</li>
-      <li>'질풍신 공격력 증폭'은 총 이동속도 증가량을 기반으로 계산되며, 최대 30%를 넘을 수 없습니다.</li>
-      <li>'진 질풍신 공격력 증폭'은 총 이동속도 증가량을 기반으로 계산되며, 최대 40%를 넘을 수 없습니다.</li>
-    </ol>
+
+    <div class="requirement-table-container">
+        <h4>증폭률별 요구 이속량</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>증폭률</th>
+                    <th>질풍신(30%) 요구값</th>
+                    <th>부족한 값</th>
+                    <th>진 질풍신(40%) 요구값</th>
+                    <th>부족한 값</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="rate in requirementRates" :key="rate">
+                    <td>{{ rate }}%</td>
+                    <td>{{ requiredSpeed(30, rate) }}</td>
+                    <td :class="{met: isMet(requiredSpeed(30, rate))}">{{ deficit(requiredSpeed(30, rate)) }}</td>
+                    <td>{{ requiredSpeed(40, rate) }}</td>
+                    <td :class="{met: isMet(requiredSpeed(40, rate))}">{{ deficit(requiredSpeed(40, rate)) }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
   </div>
 
   <div class="maker">
@@ -328,7 +334,7 @@ export default {
       // Common
       activeTab: 'attack',
       isOpened: false,
-      
+
       // Attack Speed Calculator
       job: '',
       weapon_speed: '',
@@ -347,23 +353,26 @@ export default {
       moveBuffs: {
         hunterRank: 0,
         building: 0,
-        costume: 0,
-        seal: 0,
-        riding: 0,
+        clothes: 40,
+        wings: 0,
+        seal: 20,
+        riding: 30,
         secret: 0,
         rune: 0,
         boots: 0,
-        individual: 0,
+        equipmentTotal: 0,
         horseshoe: 0,
         personality: 0,
         frozenSoul: 0,
         greatDemon: 0,
-      }
+      },
+      requirementRates: [3, 4, 5, 6, 7, 8, 9, 10]
     };
   },
   computed: {
     totalMoveSpeed() {
-      return Object.values(this.moveBuffs).reduce((sum, value) => sum + value, 0);
+      // Ensure all values are numbers before summing
+      return Object.values(this.moveBuffs).reduce((sum, value) => sum + (Number(value) || 0), 0);
     },
     zephyrAmp() {
       return Math.min(this.totalMoveSpeed, 30);
@@ -373,6 +382,19 @@ export default {
     }
   },
   methods: {
+    requiredSpeed(maxAmp, rate) {
+        if (rate === 0) return 'N/A';
+        return Math.ceil(maxAmp / (rate / 100));
+    },
+    deficit(required) {
+        if (required === 'N/A') return 'N/A';
+        const diff = required - this.totalMoveSpeed;
+        return diff > 0 ? diff : '충족';
+    },
+    isMet(required) {
+        if (required === 'N/A') return false;
+        return this.totalMoveSpeed >= required;
+    },
     change_job: function () {
       this.job_init(this.job);
     },
@@ -472,6 +494,7 @@ td > select, td > input {
   text-align: center;
   width: 100%;
   border: none;
+  box-sizing: border-box;
 }
 
 input {
@@ -526,6 +549,11 @@ button {
   margin-bottom: 20px;
 }
 
+.tab-buttons button {
+  width: 45%;
+  max-width: 250px;
+}
+
 .tab-buttons button.active {
   background-color: #2c3e50;
   color: white;
@@ -537,8 +565,9 @@ ol {
   margin-top: 20px;
 }
 
-h3 {
-  margin-bottom: 5px;
+h3, h4 {
+  margin-top: 20px;
+  margin-bottom: 10px;
 }
 
 .final_inline {
@@ -576,10 +605,28 @@ h3 {
 }
 
 .move-speed-table td:first-child {
-  width: 60%;
+  width: 50%;
   text-align: left;
   padding-left: 15px;
   font-weight: bold;
+}
+
+.slider-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.slider-cell input[type="range"] {
+    flex-grow: 1;
+}
+
+.slider-cell .slider-input {
+    width: 60px;
+}
+
+.full-width-input {
+    width: 100%;
 }
 
 .move-speed-results {
@@ -613,6 +660,14 @@ h3 {
 
 .move-speed-results .result-item .final-amp {
   color: darkred;
+}
+
+.requirement-table-container {
+    margin-top: 30px;
+}
+.requirement-table-container td.met {
+    color: green;
+    font-weight: bold;
 }
 
 
