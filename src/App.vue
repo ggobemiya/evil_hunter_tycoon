@@ -341,7 +341,7 @@
             <td><input type="number" v-model.number="record.hour" min="0" max="23" placeholder="시"></td>
             <td><input type="number" v-model.number="record.minute" min="0" max="59" placeholder="분"></td>
             <td><input type="number" v-model.number="record.kills" min="0" placeholder="마리수"></td>
-            <td><input type="text" :value="record.kpm !== null ? record.kpm : ''" readonly></td>
+            <td><input type="text" :value="record.kpm !== null ? record.kpm : ''" readonly class="kpm-display-input"></td>
           </tr>
         </tbody>
       </table>
@@ -881,5 +881,11 @@ h3, h4 {
 .kills-buttons button {
   flex-grow: 1; /* Allow buttons to grow and fill space */
   max-width: none; /* Remove max-width constraint for these buttons */
+}
+
+.kills-calculator-container table input.kpm-display-input {
+  background-color: #f0f0f0; /* Light grey background */
+  color: #555; /* Slightly darker text color */
+  font-weight: bold;
 }
 </style>
