@@ -22,3 +22,4 @@ pnpm-debug.log*
 *.sln
 *.sw?
 ggobemiya.github.io/ 
+.claude/worktrees/

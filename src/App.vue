@@ -346,8 +346,8 @@
         </tbody>
       </table>
       <div class="kills-buttons">
-        <button @click="addKillsRecord">+</button>
-        <button @click="resetKillsRecords">초기화</button>
+        <button @click="addKillsRecord">행 추가</button>
+        <button @click="resetKillsRecords">표 전체 초기화</button>
         <button @click="resetExcludingLastKillsRecord">마지막 기록 빼고 초기화</button>
       </div>
     </div>
@@ -365,10 +365,9 @@ export default {
   name: 'App',
     data() {
       return {
-        // Common
-        activeTab: 'kills', // Set 'kills' as the default active tab
-        isOpened: false,
-  
+              // Common
+              activeTab: 'attack', // Set 'attack' as the default active tab
+              isOpened: false,  
         // Attack Speed Calculator
         job: '',
         weapon_speed: '',
@@ -406,6 +405,8 @@ export default {
         killsRecords: [
           { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
           { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null }, // Added
+          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null }, // Added
         ],
         killsLocalStorageKey: 'killsPerHourRecords', // Key for localStorage
       };
@@ -472,9 +473,9 @@ export default {
       if (savedRecords) {
         this.killsRecords = JSON.parse(savedRecords);
       }
-      // Ensure there are at least two records if loaded from empty or less than two
-      if (this.killsRecords.length < 2) {
-        while (this.killsRecords.length < 2) {
+      // Ensure there are at least four records if loaded from empty or less than four
+      if (this.killsRecords.length < 4) {
+        while (this.killsRecords.length < 4) {
           this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kpm: null });
         }
       }
@@ -504,7 +505,7 @@ export default {
           const killDiff = currentRecord.kills - prevRecord.kills;
 
           if (timeDiffMinutes > 0) {
-            currentRecord.kpm = killDiff / timeDiffMinutes;
+            currentRecord.kpm = Math.floor(killDiff / timeDiffMinutes); // Apply Math.floor
           } else {
             currentRecord.kpm = 0; // No time difference, or invalid time
           }
