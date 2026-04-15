@@ -23,6 +23,7 @@
   <div class="tab-buttons">
     <button :class="{ active: activeTab === 'attack' }" @click="activeTab = 'attack'">공속 계산기</button>
     <button :class="{ active: activeTab === 'move' }" @click="activeTab = 'move'">이속 계산기</button>
+    <button :class="{ active: activeTab === 'kills' }" @click="activeTab = 'kills'">킬수 계산기</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -319,6 +320,39 @@
     </div>
   </div>
 
+  <!-- Kills per Hour Calculator -->
+  <div v-show="activeTab === 'kills'">
+    <div class="kills-calculator-container">
+      <table>
+        <thead>
+          <tr>
+            <th>월</th>
+            <th>일</th>
+            <th>시</th>
+            <th>분</th>
+            <th>마리수</th>
+            <th>분당킬수</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="(record, index) in killsRecords" :key="index">
+            <td><input type="number" v-model.number="record.month" min="1" max="12" placeholder="월"></td>
+            <td><input type="number" v-model.number="record.day" min="1" max="31" placeholder="일"></td>
+            <td><input type="number" v-model.number="record.hour" min="0" max="23" placeholder="시"></td>
+            <td><input type="number" v-model.number="record.minute" min="0" max="59" placeholder="분"></td>
+            <td><input type="number" v-model.number="record.kills" min="0" placeholder="마리수"></td>
+            <td><input type="text" :value="record.kpm !== null ? record.kpm.toFixed(2) : ''" readonly></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="kills-buttons">
+        <button @click="addKillsRecord">+</button>
+        <button @click="resetKillsRecords">초기화</button>
+        <button @click="resetExcludingLastKillsRecord">마지막 기록 빼고 초기화</button>
+      </div>
+    </div>
+  </div>
+
   <div class="maker">
     <span>제작) Andante An가자미</span>
     <br>
@@ -329,47 +363,54 @@
 <script>
 export default {
   name: 'App',
-  data() {
-    return {
-      // Common
-      activeTab: 'attack',
-      isOpened: false,
-
-      // Attack Speed Calculator
-      job: '',
-      weapon_speed: '',
-      stat: '',
-      personality: '',
-      secret: '',
-      union_speed: '',
-      quicken: '',
-      fury: '',
-      equip_speed: '',
-      final_speed: '',
-      pet_equipment: '',
-      items: ['직업', '무기', '공속스탯', '성격', '비법', '연합공속', '펫장비', '퀴큰', '퓨리'],
-
-      // Movement Speed Calculator
-      moveBuffs: {
-        hunterRank: 0,
-        building: 0,
-        clothes: 40,
-        wings: 0,
-        seal: 20,
-        riding: 30,
-        secret: 0,
-        rune: 0,
-        boots: 0,
-        equipmentTotal: 0,
-        horseshoe: 0,
-        personality: 0,
-        frozenSoul: 0,
-        greatDemon: 0,
-      },
-      requirementRates: [3, 4, 5, 6, 7, 8, 9, 10]
-    };
-  },
-  computed: {
+    data() {
+      return {
+        // Common
+        activeTab: 'kills', // Set 'kills' as the default active tab
+        isOpened: false,
+  
+        // Attack Speed Calculator
+        job: '',
+        weapon_speed: '',
+        stat: '',
+        personality: '',
+        secret: '',
+        union_speed: '',
+        quicken: '',
+        fury: '',
+        equip_speed: '',
+        final_speed: '',
+        pet_equipment: '',
+        items: ['직업', '무기', '공속스탯', '성격', '비법', '연합공속', '펫장비', '퀴큰', '퓨리'],
+  
+        // Movement Speed Calculator
+        moveBuffs: {
+          hunterRank: 0,
+          building: 0,
+          clothes: 40,
+          wings: 0,
+          seal: 20,
+          riding: 30,
+          secret: 0,
+          rune: 0,
+          boots: 0,
+          equipmentTotal: 0,
+          horseshoe: 0,
+          personality: 0,
+          frozenSoul: 0,
+          greatDemon: 0,
+        },
+        requirementRates: [3, 4, 5, 6, 7, 8, 9, 10],
+  
+        // Kills per Hour Calculator
+        killsRecords: [
+          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+        ],
+        killsLocalStorageKey: 'killsPerHourRecords', // Key for localStorage
+      };
+    },
+    computed: {
     totalMoveSpeed() {
       // Ensure all values are numbers before summing
       return Object.values(this.moveBuffs).reduce((sum, value) => sum + (Number(value) || 0), 0);
@@ -381,7 +422,97 @@ export default {
       return Math.min(this.totalMoveSpeed, 40);
     }
   },
+  mounted() {
+    this.loadKillsRecords();
+  },
+  watch: {
+    killsRecords: {
+      handler() {
+        this.saveKillsRecords();
+        this.calculateKPMs(); // Recalculate KPMs on any change to records
+      },
+      deep: true
+    },
+    // Watch for changes in activeTab to calculate KPM only when the kills tab is active
+    activeTab(newTab) {
+      if (newTab === 'kills') {
+        this.calculateKPMs();
+      }
+    },
+  },
   methods: {
+    // Kills Calculator Methods
+    addKillsRecord() {
+      this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kpm: null });
+    },
+    resetKillsRecords() {
+      this.killsRecords = [
+        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+      ];
+    },
+    resetExcludingLastKillsRecord() {
+      if (this.killsRecords.length > 0) {
+        const lastRecord = { ...this.killsRecords[this.killsRecords.length - 1] }; // Deep copy
+        // Clear kpm for the moved record
+        lastRecord.kpm = null;
+        this.killsRecords = [
+          lastRecord,
+          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+        ];
+      } else {
+        this.resetKillsRecords(); // If no records, just reset to empty state
+      }
+    },
+    saveKillsRecords() {
+      localStorage.setItem(this.killsLocalStorageKey, JSON.stringify(this.killsRecords));
+    },
+    loadKillsRecords() {
+      const savedRecords = localStorage.getItem(this.killsLocalStorageKey);
+      if (savedRecords) {
+        this.killsRecords = JSON.parse(savedRecords);
+      }
+      // Ensure there are at least two records if loaded from empty or less than two
+      if (this.killsRecords.length < 2) {
+        while (this.killsRecords.length < 2) {
+          this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kpm: null });
+        }
+      }
+      this.calculateKPMs(); // Recalculate KPMs after loading
+    },
+    calculateKPMs() {
+      for (let i = 0; i < this.killsRecords.length; i++) {
+        if (i === 0) {
+          this.killsRecords[i].kpm = null; // First record has no previous record for comparison
+          continue;
+        }
+
+        const currentRecord = this.killsRecords[i];
+        const prevRecord = this.killsRecords[i - 1];
+
+        // Ensure all necessary fields are numbers and not null
+        const isValid = [
+          currentRecord.month, currentRecord.day, currentRecord.hour, currentRecord.minute, currentRecord.kills,
+          prevRecord.month, prevRecord.day, prevRecord.hour, prevRecord.minute, prevRecord.kills
+        ].every(val => typeof val === 'number' && val !== null);
+
+        if (isValid) {
+          const currentTime = new Date(2000, currentRecord.month - 1, currentRecord.day, currentRecord.hour, currentRecord.minute);
+          const prevTime = new Date(2000, prevRecord.month - 1, prevRecord.day, prevRecord.hour, prevRecord.minute);
+
+          const timeDiffMinutes = (currentTime.getTime() - prevTime.getTime()) / (1000 * 60);
+          const killDiff = currentRecord.kills - prevRecord.kills;
+
+          if (timeDiffMinutes > 0) {
+            currentRecord.kpm = killDiff / timeDiffMinutes;
+          } else {
+            currentRecord.kpm = 0; // No time difference, or invalid time
+          }
+        } else {
+          currentRecord.kpm = null;
+        }
+      }
+    },
     requiredSpeed(maxAmp, rate) {
         if (rate === 0) return 'N/A';
         return Math.ceil(maxAmp / (rate / 100));
@@ -693,5 +824,37 @@ h3, h4 {
     border-radius: 8px;
     padding: 20px;
   }
+}
+
+/* Kills Calculator Styles */
+.kills-calculator-container {
+  margin-top: 20px;
+}
+
+.kills-calculator-container table {
+  width: 100%;
+}
+
+.kills-calculator-container table input {
+  width: 100%;
+  padding: 5px;
+  box-sizing: border-box;
+}
+
+.kills-calculator-container table th,
+.kills-calculator-container table td {
+  padding: 5px;
+}
+
+.kills-buttons {
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-around;
+  gap: 10px; /* Add gap between buttons */
+}
+
+.kills-buttons button {
+  flex-grow: 1; /* Allow buttons to grow and fill space */
+  max-width: none; /* Remove max-width constraint for these buttons */
 }
 </style>
