@@ -341,7 +341,7 @@
             <td><input type="number" v-model.number="record.hour" min="0" max="23" placeholder="시"></td>
             <td><input type="number" v-model.number="record.minute" min="0" max="59" placeholder="분"></td>
             <td><input type="number" v-model.number="record.kills" min="0" placeholder="마리수"></td>
-            <td><input type="text" :value="record.kpm !== null ? record.kpm.toFixed(2) : ''" readonly></td>
+            <td><input type="text" :value="record.kpm !== null ? record.kpm : ''" readonly></td>
           </tr>
         </tbody>
       </table>
@@ -350,6 +350,14 @@
         <button @click="resetKillsRecords">표 전체 초기화</button>
         <button @click="resetExcludingLastKillsRecord">마지막 기록 빼고 초기화</button>
       </div>
+      <ol class="kills-guide">
+        <h3>⭐ 사용 가이드</h3>
+        <li>첫 번째 행에 현재 **월, 일, 시, 분**과 **촌장의 마리수**를 입력하세요.</li>
+        <li>일정 시간 뒤, 다시 접속하여 다음 행에 업데이트된 **월, 일, 시, 분**과 **촌장의 마리수**를 입력하면 이전 기록과의 차이를 바탕으로 **분당 킬수**가 계산됩니다.</li>
+        <li>**행 추가** 버튼을 통해 기록을 위한 새로운 빈 행을 계속 추가할 수 있습니다.</li>
+        <li>**표 전체 초기화** 버튼을 누르면 현재 표의 모든 기록이 지워지고, 초기 상태인 4개의 빈 행만 남습니다.</li>
+        <li>**마지막 기록 빼고 초기화** 버튼은 표가 너무 길어졌을 때 유용합니다. 이 버튼을 누르면 마지막으로 '월, 일, 시, 분, 마리수'가 모두 채워진 유효한 기록만 첫 번째 행으로 남기고, 나머지 기록은 모두 지워져 초기 상태(총 4개 행)로 돌아갑니다. 마지막 기록이 불완전할 경우, 표 전체가 초기화됩니다.</li>
+      </ol>
     </div>
   </div>
 
@@ -450,17 +458,33 @@ export default {
       this.killsRecords = [
         { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
         { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
       ];
     },
     resetExcludingLastKillsRecord() {
       if (this.killsRecords.length > 0) {
-        const lastRecord = { ...this.killsRecords[this.killsRecords.length - 1] }; // Deep copy
-        // Clear kpm for the moved record
-        lastRecord.kpm = null;
-        this.killsRecords = [
-          lastRecord,
-          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-        ];
+        const lastRecordCandidate = this.killsRecords[this.killsRecords.length - 1];
+        const isLastRecordComplete = [
+          lastRecordCandidate.month,
+          lastRecordCandidate.day,
+          lastRecordCandidate.hour,
+          lastRecordCandidate.minute,
+          lastRecordCandidate.kills
+        ].every(val => typeof val === 'number' && val !== null);
+
+        if (isLastRecordComplete) {
+          const lastRecord = { ...lastRecordCandidate }; // Deep copy
+          lastRecord.kpm = null; // Clear kpm for the moved record
+          this.killsRecords = [
+            lastRecord,
+            { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+            { month: null, day: null, hour: null, minute: null, kills: null, kpm: null }, // Ensure 4 initial rows
+            { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+          ];
+        } else {
+          this.resetKillsRecords(); // If last record is incomplete, reset all
+        }
       } else {
         this.resetKillsRecords(); // If no records, just reset to empty state
       }
