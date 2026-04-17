@@ -331,7 +331,7 @@
             <th>시</th>
             <th>분</th>
             <th>마리수</th>
-            <th>분당킬수</th>
+            <th>시간당킬수</th>
           </tr>
         </thead>
         <tbody>
@@ -341,7 +341,7 @@
             <td><input type="number" v-model.number="record.hour" min="0" max="23" placeholder="시"></td>
             <td><input type="number" v-model.number="record.minute" min="0" max="59" placeholder="분"></td>
             <td><input type="number" v-model.number="record.kills" min="0" placeholder="마리수"></td>
-            <td><input type="text" :value="record.kpm !== null ? record.kpm : ''" readonly class="kpm-display-input"></td>
+            <td><input type="text" :value="record.kph !== null ? record.kph : ''" readonly class="kpm-display-input"></td>
           </tr>
         </tbody>
       </table>
@@ -353,7 +353,7 @@
       <ol class="kills-guide">
         <h3>⭐ 사용 가이드</h3>
         <li>첫 번째 행에 현재 **월, 일, 시, 분**과 **촌장의 마리수**를 입력하세요.</li>
-        <li>일정 시간 뒤, 다시 접속하여 다음 행에 업데이트된 **월, 일, 시, 분**과 **촌장의 마리수**를 입력하면 이전 기록과의 차이를 바탕으로 **분당 킬수**가 계산됩니다.</li>
+        <li>일정 시간 뒤, 다시 접속하여 다음 행에 업데이트된 **월, 일, 시, 분**과 **촌장의 마리수**를 입력하면 이전 기록과의 차이를 바탕으로 **시간당 킬수**가 계산됩니다.</li>
         <li>**행 추가** 버튼을 통해 기록을 위한 새로운 빈 행을 계속 추가할 수 있습니다.</li>
         <li>**표 전체 초기화** 버튼을 누르면 현재 표의 모든 기록이 지워지고, 초기 상태인 4개의 빈 행만 남습니다.</li>
         <li>**마지막 기록 빼고 초기화** 버튼은 표가 너무 길어졌을 때 유용합니다. 이 버튼을 누르면 마지막으로 '월, 일, 시, 분, 마리수'가 모두 채워진 유효한 기록만 첫 번째 행으로 남기고, 나머지 기록은 모두 지워져 초기 상태(총 4개 행)로 돌아갑니다. 마지막 기록이 불완전할 경우, 표 전체가 초기화됩니다.</li>
@@ -411,10 +411,10 @@ export default {
   
         // Kills per Hour Calculator
         killsRecords: [
-          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null }, // Added
-          { month: null, day: null, hour: null, minute: null, kills: null, kpm: null }, // Added
+          { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
+          { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
+          { month: null, day: null, hour: null, minute: null, kills: null, kph: null }, // Added
+          { month: null, day: null, hour: null, minute: null, kills: null, kph: null }, // Added
         ],
         killsLocalStorageKey: 'killsPerHourRecords', // Key for localStorage
       };
@@ -438,7 +438,7 @@ export default {
     killsRecords: {
       handler() {
         this.saveKillsRecords();
-        this.calculateKPMs(); // Recalculate KPMs on any change to records
+        this.calculateKPHs(); // Recalculate KPMs on any change to records
       },
       deep: true
     },
@@ -452,14 +452,14 @@ export default {
   methods: {
     // Kills Calculator Methods
     addKillsRecord() {
-      this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kpm: null });
+      this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kph: null });
     },
     resetKillsRecords() {
       this.killsRecords = [
-        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-        { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
+        { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
       ];
     },
     resetExcludingLastKillsRecord() {
@@ -475,12 +475,12 @@ export default {
 
         if (isLastRecordComplete) {
           const lastRecord = { ...lastRecordCandidate }; // Deep copy
-          lastRecord.kpm = null; // Clear kpm for the moved record
+          lastRecord.kph = null; // Clear kph for the moved record
           this.killsRecords = [
             lastRecord,
-            { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
-            { month: null, day: null, hour: null, minute: null, kills: null, kpm: null }, // Ensure 4 initial rows
-            { month: null, day: null, hour: null, minute: null, kills: null, kpm: null },
+            { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
+            { month: null, day: null, hour: null, minute: null, kills: null, kph: null }, // Ensure 4 initial rows
+            { month: null, day: null, hour: null, minute: null, kills: null, kph: null },
           ];
         } else {
           this.resetKillsRecords(); // If last record is incomplete, reset all
@@ -503,12 +503,12 @@ export default {
           this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kpm: null });
         }
       }
-      this.calculateKPMs(); // Recalculate KPMs after loading
+      this.calculateKPHs(); // Recalculate KPMs after loading
     },
-    calculateKPMs() {
+    calculateKPHs() {
       for (let i = 0; i < this.killsRecords.length; i++) {
         if (i === 0) {
-          this.killsRecords[i].kpm = null; // First record has no previous record for comparison
+          this.killsRecords[i].kph = null; // First record has no previous record for comparison
           continue;
         }
 
@@ -529,12 +529,12 @@ export default {
           const killDiff = currentRecord.kills - prevRecord.kills;
 
           if (timeDiffMinutes > 0) {
-            currentRecord.kpm = Math.floor(killDiff / timeDiffMinutes); // Apply Math.floor
+            currentRecord.kph = (killDiff / timeDiffMinutes) * 60; // Calculate kills per hour
           } else {
-            currentRecord.kpm = 0; // No time difference, or invalid time
+            currentRecord.kph = 0; // No time difference, or invalid time
           }
         } else {
-          currentRecord.kpm = null;
+          currentRecord.kph = null;
         }
       }
     },
