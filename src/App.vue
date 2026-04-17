@@ -529,7 +529,7 @@ export default {
           const killDiff = currentRecord.kills - prevRecord.kills;
 
           if (timeDiffMinutes > 0) {
-            currentRecord.kph = (killDiff / timeDiffMinutes) * 60; // Calculate kills per hour
+            currentRecord.kph = Math.round((killDiff / timeDiffMinutes) * 60); // Calculate kills per hour and round to nearest integer
           } else {
             currentRecord.kph = 0; // No time difference, or invalid time
           }
