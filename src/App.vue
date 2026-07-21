@@ -24,6 +24,7 @@
     <button :class="{ active: activeTab === 'attack' }" @click="activeTab = 'attack'">공속 계산기</button>
     <button :class="{ active: activeTab === 'move' }" @click="activeTab = 'move'">이속 계산기</button>
     <button :class="{ active: activeTab === 'kills' }" @click="activeTab = 'kills'">킬수 계산기</button>
+    <button :class="{ active: activeTab === 'rune' }" @click="activeTab = 'rune'">룬 획득 정보</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -231,11 +232,7 @@
         <td><input type="number" v-model.number="moveBuffs.rune" placeholder="입력" class="full-width-input"></td>
       </tr>
       <tr>
-        <td>이속신</td>
-        <td><input type="number" v-model.number="moveBuffs.boots" placeholder="입력" class="full-width-input"></td>
-      </tr>
-      <tr>
-        <td>장비 이속 총합</td>
+        <td>질풍신 포함 장비 이속 총합</td>
         <td><input type="number" v-model.number="moveBuffs.equipmentTotal" placeholder="입력" class="full-width-input"></td>
       </tr>
       <tr>
@@ -285,13 +282,11 @@
         <span class="label">총 이동속도 증가량 (합계):</span>
         <span class="value">{{ totalMoveSpeed }}</span>
       </div>
-      <div class="result-item">
-        <span class="label">질풍신 공격력 증폭 (최대 30%):</span>
-        <span class="value final-amp">{{ zephyrAmp }}%</span>
+      <div class="result-item result-note">
+        <span class="label">질풍신 공격력 증폭 (최대 30%)</span>
       </div>
-      <div class="result-item">
-        <span class="label">진 질풍신 공격력 증폭 (최대 40%):</span>
-        <span class="value final-amp">{{ trueZephyrAmp }}%</span>
+      <div class="result-item result-note">
+        <span class="label">진 질풍신 공격력 증폭 (최대 40%)</span>
       </div>
     </div>
 
@@ -302,18 +297,18 @@
                 <tr>
                     <th>증폭률</th>
                     <th>질풍신(30%) 요구값</th>
-                    <th>부족한 값</th>
+                    <th>부족한 값(증폭률)</th>
                     <th>진 질풍신(40%) 요구값</th>
-                    <th>부족한 값</th>
+                    <th>부족한 값(증폭률)</th>
                 </tr>
             </thead>
             <tbody>
                 <tr v-for="rate in requirementRates" :key="rate">
                     <td>{{ rate }}%</td>
                     <td>{{ requiredSpeed(30, rate) }}</td>
-                    <td :class="{met: isMet(requiredSpeed(30, rate))}">{{ deficit(requiredSpeed(30, rate)) }}</td>
+                    <td :class="{met: isMet(requiredSpeed(30, rate))}">{{ deficit(requiredSpeed(30, rate)) }} ({{ currentAmp(30, rate) }}%)</td>
                     <td>{{ requiredSpeed(40, rate) }}</td>
-                    <td :class="{met: isMet(requiredSpeed(40, rate))}">{{ deficit(requiredSpeed(40, rate)) }}</td>
+                    <td :class="{met: isMet(requiredSpeed(40, rate))}">{{ deficit(requiredSpeed(40, rate)) }} ({{ currentAmp(40, rate) }}%)</td>
                 </tr>
             </tbody>
         </table>
@@ -361,6 +356,96 @@
     </div>
   </div>
 
+  <!-- Rune Drop Info -->
+  <div v-show="activeTab === 'rune'">
+    <div class="rune-container">
+      <div class="rune-floor-finder">
+        <span class="rune-finder-label">현재 층</span>
+        <input type="number" min="1" max="300" v-model.number="currentFloor" placeholder="예) 235">
+        <div class="rune-floor-result" v-if="currentFloorStages">
+          <span v-for="s in currentFloorStages" :key="s.name" class="floor-chip" :style="s.style">
+            {{ s.name }} · {{ s.text }}
+          </span>
+        </div>
+        <div class="rune-floor-result rune-floor-empty" v-else>1 ~ 300 사이의 층을 입력하면 해당 위치를 표에서 짚어줍니다.</div>
+      </div>
+
+      <h3>룬 획득 층</h3>
+      <p class="rune-note">칸 하나가 하나의 단계 구간입니다. 색이 진할수록 높은 단계입니다.</p>
+
+      <div v-for="block in [0, 1, 2]" :key="block" class="rune-block">
+        <h4>{{ block * 100 + 1 }} ~ {{ block * 100 + 100 }}층</h4>
+        <div class="rune-scroll">
+          <table class="rune-matrix">
+            <thead>
+            <tr>
+              <th class="rune-row-label">룬 구분</th>
+              <th v-for="h in blockHeaders(block)" :key="h.from">{{ h.from }}<br>~{{ h.to }}</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr v-for="row in runeRows" :key="row.name">
+              <th class="rune-row-label">{{ row.name }}</th>
+              <td v-for="cell in blockCells(row, block)" :key="cell.from"
+                  :colspan="cell.span"
+                  :class="{ 'rune-empty': cell.stage === null, 'rune-active': isActiveCell(cell) }"
+                  :style="cell.stage === null ? null : bandStyle(row, cell.stage)">
+                {{ cell.stage === null ? '미출현' : cell.stage + '단계' }}
+              </td>
+            </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h3>스탯 룬 옵션 수치</h3>
+      <p class="rune-note">단계별 <b>최대치</b>입니다. 같은 그룹 안에서는 옵션 종류와 상관없이 수치가 같습니다.</p>
+      <div class="rune-scroll">
+        <table class="rune-option-table">
+          <thead>
+          <tr>
+            <th class="rune-row-label">그룹 \ 단계</th>
+            <th v-for="n in 15" :key="n">{{ n }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="g in runeOptionGroups" :key="g.label">
+            <th class="rune-row-label">{{ g.label }}그룹</th>
+            <td v-for="(v, i) in g.values" :key="i">{{ v }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="rune-group-list">
+        <div v-for="g in runeOptionGroups" :key="g.label" class="rune-group-item">
+          <div class="rune-group-head"><span class="rune-group-badge">{{ g.label }}</span>{{ g.title }} ({{ g.options.length }}종)</div>
+          <div class="rune-group-options">{{ g.options.join(', ') }}</div>
+        </div>
+      </div>
+
+      <h3>스킬룬 목록</h3>
+      <table class="rune-skill-table">
+        <tbody>
+        <tr v-for="t in skillRuneList" :key="t.tier">
+          <th>{{ t.tier }}<br>({{ t.runes.length }}종)</th>
+          <td>{{ t.runes.join(', ') }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ol class="rune-guide">
+        <h3>⭐ 참고</h3>
+        <li>모든 룬은 <b>마왕성 앞뜰</b>에서만 나옵니다. 층이 높을수록 높은 단계의 룬이 나옵니다.</li>
+        <li>같은 차수의 스킬룬은 종류와 상관없이 획득 층이 동일합니다.</li>
+        <li>스탯 룬과 2차 스킬룬은 20층마다, 1차 스킬룬은 30층마다 단계가 오릅니다.</li>
+        <li>3차 스킬룬만 201~210층에서 3단계가 한 번 더 이어진 뒤 20층 단위로 올라갑니다.</li>
+        <li>11~15단계의 최소 수치는 공개된 자료가 없어 최대치만 표기했습니다.</li>
+        <li>A그룹은 10단계까지 2단계마다 최대치가 1씩 올랐지만, 11단계부터는 1단계마다 1씩 오릅니다.</li>
+        <li>출처: 이블헌터 타이쿤 공식 카페 (룬 옵션표 / 스킬룬 층정보 / 앞뜰 201~300층 룬 정보)</li>
+      </ol>
+    </div>
+  </div>
+
   <div class="maker">
     <span>제작) Andante An가자미</span>
     <br>
@@ -400,7 +485,6 @@ export default {
           riding: 30,
           secret: 0,
           rune: 0,
-          boots: 0,
           equipmentTotal: 0,
           horseshoe: 0,
           personality: 0,
@@ -417,6 +501,95 @@ export default {
           { month: null, day: null, hour: null, minute: null, kills: null, kph: null }, // Added
         ],
         killsLocalStorageKey: 'killsPerHourRecords', // Key for localStorage
+
+        // Rune Drop Info
+        currentFloor: null,
+        runeRows: [
+          {
+            name: '스탯 룬',
+            hue: 210,
+            maxStage: 15,
+            // 20층마다 1단계씩, 1~300층
+            bands: Array.from({ length: 15 }, (_, i) => ({ stage: i + 1, from: i * 20 + 1, to: (i + 1) * 20 })),
+          },
+          {
+            name: '1차 스킬룬',
+            hue: 145,
+            maxStage: 3,
+            bands: [
+              { stage: 1, from: 101, to: 130 },
+              { stage: 2, from: 131, to: 160 },
+              { stage: 3, from: 161, to: 300 },
+            ],
+          },
+          {
+            name: '2차 스킬룬',
+            hue: 25,
+            maxStage: 8,
+            bands: [
+              { stage: 1, from: 111, to: 140 },
+              { stage: 2, from: 141, to: 170 },
+              { stage: 3, from: 171, to: 200 },
+              { stage: 4, from: 201, to: 220 },
+              { stage: 5, from: 221, to: 240 },
+              { stage: 6, from: 241, to: 260 },
+              { stage: 7, from: 261, to: 280 },
+              { stage: 8, from: 281, to: 300 },
+            ],
+          },
+          {
+            name: '3차 스킬룬',
+            hue: 285,
+            maxStage: 8,
+            bands: [
+              { stage: 1, from: 121, to: 150 },
+              { stage: 2, from: 151, to: 180 },
+              { stage: 3, from: 181, to: 210 },
+              { stage: 4, from: 211, to: 230 },
+              { stage: 5, from: 231, to: 250 },
+              { stage: 6, from: 251, to: 270 },
+              { stage: 7, from: 271, to: 290 },
+              { stage: 8, from: 291, to: 300 },
+            ],
+          },
+        ],
+        runeOptionGroups: [
+          {
+            label: 'A',
+            title: '공격속도 · 회피 · 치명타 확률',
+            options: ['공격속도 %', '회피력 %', '치명타 확률 %'],
+            values: [1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 7, 8, 9, 10, 11],
+          },
+          {
+            label: 'B',
+            title: '이동속도 · 흡혈 · 회복류',
+            options: ['이동속도 %', '데미지 흡혈 %', '받는 데미지 25% 감소 확률 %', '공격시 피해의 추가 데미지 %', '공격시 3% 기분 회복 확률 %', '공격시 1% 기력 회복 확률 %', '공격시 3% 허기 회복 확률 %'],
+            values: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+          },
+          {
+            label: 'C',
+            title: '소모량 · 경험치',
+            options: ['기분 소모량 %', '기력 소모량 %', '허기 소모량 %', '획득 경험치 %'],
+            values: [4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32],
+          },
+          {
+            label: 'D',
+            title: '공격력 · 방어력 · 체력 · 획득류',
+            options: ['전체 공격력 %', '전체 방어력 %', '체력 %', '2배 골드획득 확률 %', '재료 추가 획득 확률 %'],
+            values: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34],
+          },
+          {
+            label: 'E',
+            title: '종족 데미지 · 치명타 피해량',
+            options: ['영장류 데미지 %', '악마류 데미지 %', '언데드류 데미지 %', '보스류 데미지 %', '동물류 데미지 %', '치명타 피해량 %'],
+            values: [10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38],
+          },
+        ],
+        skillRuneList: [
+          { tier: '1차 스킬룬', runes: ['퓨리', '홀리라이트', '멀티샷', '썬더볼트'] },
+          { tier: '2차 스킬룬', runes: ['듀얼웨폰', '데스코일', '필버라이즈', '블레싱', '실버웨폰', '다크웨폰', '레인폴', '스나이핑', '서몬피닉스', '블리자드', '스톤커즈', '메테오'] },
+          { tier: '3차 스킬룬', runes: ['배틀샤우트', '오라블레이드', '싸이클론', '디펜스오라', '핸즈오브갓', '익스큐션', '송오브피스', '포이즌봄', '미스틱애로우', '서몬퍼밀리어', '폴리모프', '나이트메어'] },
+        ],
       };
     },
     computed: {
@@ -424,12 +597,19 @@ export default {
       // Ensure all values are numbers before summing
       return Object.values(this.moveBuffs).reduce((sum, value) => sum + (Number(value) || 0), 0);
     },
-    zephyrAmp() {
-      return Math.min(this.totalMoveSpeed, 30);
+    currentFloorStages() {
+      const floor = Number(this.currentFloor);
+      if (!floor || floor < 1 || floor > 300) return null;
+      const columnStart = Math.floor((floor - 1) / 10) * 10 + 1;
+      return this.runeRows.map(row => {
+        const stage = this.stageAtColumn(row, columnStart);
+        return {
+          name: row.name,
+          text: stage === null ? '미출현' : stage + '단계',
+          style: stage === null ? {} : this.bandStyle(row, stage),
+        };
+      });
     },
-    trueZephyrAmp() {
-      return Math.min(this.totalMoveSpeed, 40);
-    }
   },
   mounted() {
     this.loadKillsRecords();
@@ -445,11 +625,52 @@ export default {
     // Watch for changes in activeTab to calculate KPM only when the kills tab is active
     activeTab(newTab) {
       if (newTab === 'kills') {
-        this.calculateKPMs();
+        this.calculateKPHs();
       }
     },
   },
   methods: {
+    // Rune Drop Info Methods
+    blockHeaders(block) {
+      return Array.from({ length: 10 }, (_, i) => {
+        const from = block * 100 + i * 10 + 1;
+        return { from, to: from + 9 };
+      });
+    },
+    // 층 구간 경계가 모두 10 단위라 컬럼 시작 층만으로 단계를 판별할 수 있다
+    stageAtColumn(row, columnStart) {
+      const band = row.bands.find(b => columnStart >= b.from && columnStart + 9 <= b.to);
+      return band ? band.stage : null;
+    },
+    // 같은 단계가 이어지는 컬럼들을 하나의 셀로 병합한다
+    blockCells(row, block) {
+      const cells = [];
+      for (let i = 0; i < 10; i++) {
+        const from = block * 100 + i * 10 + 1;
+        const stage = this.stageAtColumn(row, from);
+        const last = cells[cells.length - 1];
+        if (last && last.stage === stage) {
+          last.span += 1;
+        } else {
+          cells.push({ stage, span: 1, from });
+        }
+      }
+      return cells;
+    },
+    bandStyle(row, stage) {
+      const ratio = row.maxStage > 1 ? (stage - 1) / (row.maxStage - 1) : 0;
+      const lightness = 92 - ratio * 37;
+      return {
+        backgroundColor: `hsl(${row.hue}, 62%, ${lightness}%)`,
+        color: lightness < 68 ? '#fff' : '#2c3e50',
+      };
+    },
+    isActiveCell(cell) {
+      const floor = Number(this.currentFloor);
+      if (!floor) return false;
+      return floor >= cell.from && floor <= cell.from + cell.span * 10 - 1;
+    },
+
     // Kills Calculator Methods
     addKillsRecord() {
       this.killsRecords.push({ month: null, day: null, hour: null, minute: null, kills: null, kph: null });
@@ -541,6 +762,11 @@ export default {
     requiredSpeed(maxAmp, rate) {
         if (rate === 0) return 'N/A';
         return Math.ceil(maxAmp / (rate / 100));
+    },
+    // 현재 이속 총합으로 해당 증폭률에서 실제로 받는 증폭값 (상한 적용)
+    currentAmp(maxAmp, rate) {
+        const amp = Math.min(this.totalMoveSpeed * (rate / 100), maxAmp);
+        return Math.round(amp * 10) / 10;
     },
     deficit(required) {
         if (required === 'N/A') return 'N/A';
@@ -703,10 +929,14 @@ button {
 
 .tab-buttons {
   margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
 .tab-buttons button {
-  width: 45%;
+  flex: 1 1 40%;
   max-width: 250px;
 }
 
@@ -814,8 +1044,11 @@ h3, h4 {
   font-weight: bold;
 }
 
-.move-speed-results .result-item .final-amp {
-  color: darkred;
+.move-speed-results .result-item.result-note {
+  justify-content: flex-start;
+  padding: 4px 0;
+  font-size: 15px;
+  color: #555;
 }
 
 .requirement-table-container {
@@ -887,5 +1120,159 @@ h3, h4 {
   background-color: #f0f0f0; /* Light grey background */
   color: #555; /* Slightly darker text color */
   font-weight: bold;
+}
+
+/* Rune Drop Info Styles */
+.rune-container {
+  margin-top: 20px;
+}
+
+.rune-floor-finder {
+  padding: 15px;
+  border: 2px solid #2c3e50;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.rune-finder-label {
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.rune-floor-result {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.rune-floor-result .floor-chip {
+  padding: 5px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.rune-floor-empty {
+  color: #888;
+  font-size: 13px;
+}
+
+.rune-note {
+  font-size: 13px;
+  color: #666;
+  margin: 0 0 10px;
+  text-align: left;
+}
+
+.rune-block {
+  margin-bottom: 20px;
+}
+
+.rune-block h4 {
+  text-align: left;
+  margin-bottom: 6px;
+}
+
+/* border-collapse 때문에 sticky 셀의 border가 사라져 box-shadow로 대체한다 */
+.rune-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.rune-matrix, .rune-option-table {
+  table-layout: auto;
+  width: max-content;
+  min-width: 100%;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rune-matrix th, .rune-matrix td,
+.rune-option-table th, .rune-option-table td {
+  padding: 6px 5px;
+}
+
+.rune-matrix thead th, .rune-option-table thead th {
+  font-weight: normal;
+  line-height: 1.3;
+}
+
+.rune-matrix td, .rune-option-table td {
+  font-weight: bold;
+}
+
+.rune-row-label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: lightgrey;
+  font-weight: bold;
+  text-align: left;
+  box-shadow: 1px 0 0 #2c3e50;
+}
+
+.rune-matrix td.rune-empty {
+  background-color: #eeeeee;
+  color: #aaaaaa;
+  font-weight: normal;
+}
+
+.rune-matrix td.rune-active {
+  outline: 3px solid #d40000;
+  outline-offset: -3px;
+}
+
+.rune-group-list {
+  margin-top: 12px;
+  text-align: left;
+}
+
+.rune-group-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.rune-group-head {
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.rune-group-badge {
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+  line-height: 20px;
+  margin-right: 8px;
+  border-radius: 50%;
+  background-color: #2c3e50;
+  color: white;
+  text-align: center;
+  font-size: 12px;
+}
+
+.rune-group-options {
+  font-size: 13px;
+  color: #555;
+  margin-top: 3px;
+  padding-left: 28px;
+}
+
+.rune-skill-table th {
+  width: 90px;
+  font-size: 13px;
+}
+
+.rune-skill-table td {
+  text-align: left;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.rune-guide li {
+  margin-bottom: 5px;
 }
 </style>

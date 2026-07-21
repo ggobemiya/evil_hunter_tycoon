@@ -24,3 +24,4 @@ pnpm-debug.log*
 ggobemiya.github.io/ 
 .claude/worktrees/
 gemini.md
+.gstack/
