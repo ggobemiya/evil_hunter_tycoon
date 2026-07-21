@@ -36,3 +36,24 @@ export const challengerTiers = [
   { group: '브론즈', tier: '브론즈3', rating: 1400, honor: 50 },
   { group: '브론즈', tier: '브론즈4', rating: 1300, honor: 25 },
 ];
+
+export const rankingRewards = [
+  { name: '1티어 보상', cond: '랭킹 1~3위', token: 250, gem: 500 },
+  { name: '2티어 보상', cond: '랭킹 4~10위', token: 200, gem: 400 },
+  { name: '3티어 보상', cond: '랭킹 11~20위', token: 150, gem: 300 },
+  { name: '4티어 보상', cond: '랭킹 21~50위', token: 125, gem: 250 },
+  { name: '5티어 보상', cond: '랭킹 51~100위', token: 100, gem: 200 },
+  { name: '6티어 보상', cond: '랭킹 101~200위', token: 70, gem: 140 },
+  { name: '7티어 보상', cond: '랭킹 201~300위', token: 60, gem: 120 },
+  { name: '8티어 보상', cond: '랭킹 301~400위', token: 50, gem: 100 },
+  { name: '9티어 보상', cond: '랭킹 401~500위', token: 40, gem: 80 },
+  { name: '10티어 보상', cond: '랭킹 501~750위', token: 30, gem: 60 },
+  { name: '11티어 보상', cond: '랭킹 751~1000위', token: 20, gem: 40 },
+  { name: '12티어 보상', cond: '랭킹 1001위 ~ 10000위', token: 10, gem: 20 },
+];
+
+export const participationRewards = [
+  { name: '50회 참여보상', cond: '50회 이상 참여', token: 50, gem: 200 },
+  { name: '35회 참여보상', cond: '35회 이상 참여', token: 20, gem: 100 },
+  { name: '20회 참여보상', cond: '20회 이상 참여', token: 10, gem: 0 },
+];

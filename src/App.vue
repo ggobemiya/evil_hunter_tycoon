@@ -718,6 +718,58 @@
         </tr>
         </tbody>
       </table>
+
+      <table class="league-table reward-table">
+        <colgroup>
+          <col class="reward-col-name">
+          <col class="reward-col-cond">
+          <col class="reward-col-token">
+          <col class="reward-col-gem">
+        </colgroup>
+        <thead>
+        <tr><th colspan="4" class="reward-title ranking">랭킹 보상</th></tr>
+        <tr>
+          <th class="reward-head ranking">보상명칭</th>
+          <th class="reward-head ranking">보상 조건 랭킹 순위</th>
+          <th class="reward-head ranking">아레나 토큰 개수</th>
+          <th class="reward-head ranking">보석 개수</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="row in rankingRewards" :key="row.name">
+          <td class="reward-name">{{ row.name }}</td>
+          <td>{{ row.cond }}</td>
+          <td class="reward-token">{{ row.token }}</td>
+          <td class="reward-gem">{{ row.gem }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <table class="league-table reward-table">
+        <colgroup>
+          <col class="reward-col-name">
+          <col class="reward-col-cond">
+          <col class="reward-col-token">
+          <col class="reward-col-gem">
+        </colgroup>
+        <thead>
+        <tr><th colspan="4" class="reward-title joining">참여 보상</th></tr>
+        <tr>
+          <th class="reward-head joining">보상명칭</th>
+          <th class="reward-head joining">보상 조건 참여횟수</th>
+          <th class="reward-head joining">아레나 토큰 개수</th>
+          <th class="reward-head joining">보석 개수</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="row in participationRewards" :key="row.name">
+          <td class="reward-name">{{ row.name }}</td>
+          <td>{{ row.cond }}</td>
+          <td class="reward-token">{{ row.token }}</td>
+          <td class="reward-gem">{{ row.gem }}</td>
+        </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -729,7 +781,7 @@
 <script>
 import { dogamSets, boxAItems, boxBItems, chonbiItems, boxes } from './dogamData';
 import { petEquipSets } from './petEquipData';
-import { challengerTiers, challengerGroups } from './challengerData';
+import { challengerTiers, challengerGroups, rankingRewards, participationRewards } from './challengerData';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
 
@@ -916,6 +968,8 @@ export default {
 
         // Challengers League
         challengerTiers,
+        rankingRewards,
+        participationRewards,
         myRating: null,
 
         // Formation Editor
@@ -2413,4 +2467,54 @@ h3, h4 {
   outline: 3px solid #d40000;
   outline-offset: -3px;
 }
+
+.reward-table {
+  margin-top: 25px;
+  font-size: 12px;
+}
+
+.reward-title {
+  color: white;
+  font-size: 14px;
+  padding: 8px 4px;
+}
+
+.reward-title.ranking {
+  background-color: #c9905c;
+}
+
+.reward-title.joining {
+  background-color: #4f9a2a;
+}
+
+.reward-head {
+  font-weight: bold;
+}
+
+.reward-head.ranking {
+  background-color: #ff9900;
+}
+
+.reward-head.joining {
+  background-color: #9ccc5e;
+}
+
+.reward-table .reward-name {
+  font-weight: bold;
+}
+
+.reward-table .reward-token {
+  color: #b35c00;
+  font-weight: bold;
+}
+
+.reward-table .reward-gem {
+  color: #1a3d8f;
+  font-weight: bold;
+}
+
+.reward-col-name { width: 23%; }
+.reward-col-cond { width: 31%; }
+.reward-col-token { width: 23%; }
+.reward-col-gem { width: 23%; }
 </style>
