@@ -73,7 +73,7 @@ export const petEquipSets = [
           { job: '크루세이더', skill: '블레싱' },
           { job: '민스트럴', skill: '송오브피스' },
           { job: '오포지터', skill: '아이스 실드' },
-          { job: '소드 엠페러', skill: '데스아머' },
+          { job: '소드엠페러', skill: '데스아머' },
           { job: '하이프리스트', skill: '빛의 은총' },
         ],
       },

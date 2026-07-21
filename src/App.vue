@@ -28,6 +28,7 @@
     <button :class="{ active: activeTab === 'dogam' }" @click="activeTab = 'dogam'">도감 / 확률</button>
     <button :class="{ active: activeTab === 'pet' }" @click="activeTab = 'pet'">펫 장비</button>
     <button :class="{ active: activeTab === 'formation' }" @click="activeTab = 'formation'">승전 진형 편집기</button>
+    <button :class="{ active: activeTab === 'league' }" @click="activeTab = 'league'">챌린저스 리그</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -682,6 +683,44 @@
     </div>
   </div>
 
+  <!-- Challengers League -->
+  <div v-show="activeTab === 'league'">
+    <div class="league-container">
+      <h3>티어별 명예점수 보상표</h3>
+
+      <div class="league-finder">
+        <span class="league-finder-label">내 레이팅</span>
+        <input type="number" min="0" v-model.number="myRating" placeholder="예) 2450">
+        <div v-if="myTier" class="league-result">
+          <span class="league-result-tier" :style="{ backgroundColor: leagueColor(myTier.group) }">{{ myTier.tier }}</span>
+          <span class="league-result-honor">명예 점수 {{ myTier.honor }}</span>
+        </div>
+        <div v-else class="league-result league-result-empty">
+          {{ myRating ? '브론즈4 미만이라 보상 구간에 들지 않습니다.' : '레이팅을 입력하면 해당 티어를 짚어줍니다.' }}
+        </div>
+      </div>
+
+      <table class="league-table">
+        <thead>
+        <tr>
+          <th>티어</th>
+          <th>레이팅(이상)</th>
+          <th>명예 점수</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="row in challengerTiers" :key="row.tier"
+            :class="{ 'league-current': myTier && myTier.tier === row.tier }"
+            :style="{ backgroundColor: leagueColor(row.group) }">
+          <td class="league-tier">{{ row.tier }}</td>
+          <td>{{ row.rating }}</td>
+          <td class="league-honor">{{ row.honor }}</td>
+        </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
   <div class="maker">
     <div v-for="(credit, i) in currentCredits" :key="i">{{ credit.role }}) {{ credit.name }}</div>
   </div>
@@ -690,6 +729,7 @@
 <script>
 import { dogamSets, boxAItems, boxBItems, chonbiItems, boxes } from './dogamData';
 import { petEquipSets } from './petEquipData';
+import { challengerTiers, challengerGroups } from './challengerData';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
 
@@ -719,7 +759,7 @@ export default {
               tabCredits: {
                 attack: [
                   { role: '제작', name: 'Andante An가자미' },
-                  { role: '수정', name: 'Bell 꼬뱀벨' },
+                  { role: '수정', name: 'Bell 꼬벨' },
                 ],
                 move: [{ role: '제작', name: 'Bell 꼬벨' }],
                 kills: [{ role: '제작', name: 'Bell 꼬벨' }],
@@ -727,6 +767,7 @@ export default {
                 dogam: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 pet: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 formation: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                league: [{ role: '제작', name: 'Stella 꼬뱀별' }],
               },
         // Attack Speed Calculator
         job: '',
@@ -873,6 +914,10 @@ export default {
         // Riding Pet Equipment
         petEquipSets,
 
+        // Challengers League
+        challengerTiers,
+        myRating: null,
+
         // Formation Editor
         formation: { mine: new Array(16).fill(null), enemy: new Array(16).fill(null) },
         newUnit: { name: '', job: '', side: 'mine' },
@@ -884,7 +929,7 @@ export default {
         resetJobOnAdd: true,
         maxUnits: MAX_UNITS,
         jobOptions: [
-          '배틀커맨더', '소드 엠페러', '오포지터', '마나로드', '하이프리스트',
+          '배틀커맨더', '소드엠페러', '오포지터', '마나로드', '하이프리스트',
           '홀리나이트', '스타슈터', '데드아이', '오버로드', '데스브링어',
         ],
       };
@@ -954,6 +999,12 @@ export default {
     currentCredits() {
       return this.tabCredits[this.activeTab] || [];
     },
+    // 표가 높은 티어부터 정렬되어 있어 조건을 만족하는 첫 행이 곧 내 티어다
+    myTier() {
+      const rating = Number(this.myRating);
+      if (!rating) return null;
+      return challengerTiers.find(row => rating >= row.rating) || null;
+    },
     boardStyle() {
       return { width: TILE_W * 4 + 'px', height: TILE_H * 4 + 'px' };
     },
@@ -982,6 +1033,11 @@ export default {
     },
   },
   methods: {
+    // Challengers League Methods
+    leagueColor(group) {
+      return challengerGroups[group] || '#ffffff';
+    },
+
     // Formation Editor Methods
     setBoardRef(side, el) {
       this.boardRefs[side] = el;
@@ -2284,5 +2340,77 @@ h3, h4 {
 
 .formation-guide li {
   margin-bottom: 5px;
+}
+
+/* Challengers League Styles */
+.league-container {
+  margin-top: 20px;
+}
+
+.league-finder {
+  padding: 15px;
+  margin-bottom: 15px;
+  border: 2px solid #2c3e50;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.league-finder-label {
+  font-weight: bold;
+  font-size: 18px;
+  margin-right: 10px;
+}
+
+.league-result {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.league-result-tier {
+  padding: 4px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.league-result-honor {
+  font-weight: bold;
+  font-size: 16px;
+  color: darkred;
+}
+
+.league-result-empty {
+  color: #888;
+  font-size: 13px;
+}
+
+.league-table {
+  font-size: 13px;
+}
+
+.league-table th {
+  padding: 8px 4px;
+}
+
+.league-table td {
+  padding: 7px 4px;
+}
+
+.league-table .league-tier {
+  font-weight: bold;
+}
+
+.league-table .league-honor {
+  font-weight: bold;
+  color: #1a3d8f;
+}
+
+.league-table tr.league-current {
+  outline: 3px solid #d40000;
+  outline-offset: -3px;
 }
 </style>
