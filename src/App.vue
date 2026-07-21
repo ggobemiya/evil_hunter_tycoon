@@ -683,9 +683,7 @@
   </div>
 
   <div class="maker">
-    <span>제작) Andante An가자미</span>
-    <br>
-    <span>수정) Bell 꼬뱀벨</span>
+    <div v-for="(credit, i) in currentCredits" :key="i">{{ credit.role }}) {{ credit.name }}</div>
   </div>
 </template>
 
@@ -716,7 +714,20 @@ export default {
       return {
               // Common
               activeTab: 'attack', // Set 'attack' as the default active tab
-              isOpened: false,  
+              isOpened: false,
+              // 탭마다 제작자 표기가 다르다
+              tabCredits: {
+                attack: [
+                  { role: '제작', name: 'Andante An가자미' },
+                  { role: '수정', name: 'Bell 꼬뱀벨' },
+                ],
+                move: [{ role: '제작', name: 'Bell 꼬벨' }],
+                kills: [{ role: '제작', name: 'Bell 꼬벨' }],
+                rune: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                dogam: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                pet: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                formation: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+              },
         // Attack Speed Calculator
         job: '',
         weapon_speed: '',
@@ -939,6 +950,9 @@ export default {
     visibleChonbiItems() {
       if (!this.dogamHideOwned) return chonbiItems;
       return chonbiItems.filter(i => !i.key || !this.dogamOwned[i.key]);
+    },
+    currentCredits() {
+      return this.tabCredits[this.activeTab] || [];
     },
     boardStyle() {
       return { width: TILE_W * 4 + 'px', height: TILE_H * 4 + 'px' };
