@@ -27,6 +27,7 @@
     <button :class="{ active: activeTab === 'rune' }" @click="activeTab = 'rune'">룬 획득 정보</button>
     <button :class="{ active: activeTab === 'dogam' }" @click="activeTab = 'dogam'">도감 / 확률</button>
     <button :class="{ active: activeTab === 'pet' }" @click="activeTab = 'pet'">펫 장비</button>
+    <button :class="{ active: activeTab === 'formation' }" @click="activeTab = 'formation'">승전 진형 편집기</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -620,6 +621,67 @@
     </div>
   </div>
 
+  <!-- Formation Editor -->
+  <div v-show="activeTab === 'formation'">
+    <div class="formation-container">
+      <div class="formation-form">
+        <input v-model.trim="newUnit.name" type="text" maxlength="12" placeholder="캐릭터 이름" @keyup.enter="addUnit">
+        <input v-model.trim="newUnit.job" type="text" list="formation-job-list" placeholder="직업" @keyup.enter="addUnit">
+        <datalist id="formation-job-list">
+          <option v-for="job in jobOptions" :key="job" :value="job"></option>
+        </datalist>
+        <select v-model="newUnit.side">
+          <option value="mine">우리</option>
+          <option value="enemy">상대</option>
+        </select>
+        <button @click="addUnit">추가</button>
+        <label class="formation-reset-job">
+          <input type="checkbox" v-model="resetJobOnAdd"> 추가 후 직업 초기화
+        </label>
+      </div>
+      <p v-if="formationMessage" class="formation-message">{{ formationMessage }}</p>
+
+      <div v-for="side in boardOrder" :key="side" class="formation-side">
+        <div class="formation-side-head">
+          <span class="formation-side-name" :class="side">{{ side === 'mine' ? '우리 진형' : '상대 진형' }}</span>
+          <span class="formation-count">{{ unitCount(side) }} / {{ maxUnits }}</span>
+          <button class="formation-clear" @click="clearSide(side)">비우기</button>
+        </div>
+        <div class="formation-board" :ref="el => setBoardRef(side, el)" :style="boardStyle">
+          <div v-for="tile in tilesOf(side)" :key="tile.i"
+               class="ftile" :class="{ occupied: !!tile.unit }" :style="tileStyle(tile)">
+            <div class="ftile-bg"></div>
+            <span v-if="!tile.unit" class="ftile-num">{{ tile.num }}</span>
+            <div v-else class="funit" :class="{ dragging: isDragging(side, tile.i) }"
+                 @pointerdown="startDrag(side, tile, $event)">
+              <span class="funit-name">{{ tile.unit.name }}</span>
+              <span class="funit-job" :style="{ color: jobColor(tile.unit.job) }">{{ tile.unit.job }}</span>
+              <button class="funit-del" @pointerdown.stop @click.stop="removeUnit(side, tile.i)">×</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="drag" class="funit drag-ghost" :style="ghostStyle">
+        <span class="funit-name">{{ drag.unit.name }}</span>
+        <span class="funit-job" :style="{ color: jobColor(drag.unit.job) }">{{ drag.unit.job }}</span>
+      </div>
+
+      <ol class="formation-guide">
+        <h3>⭐ 사용 가이드</h3>
+        <li>이름과 직업을 입력하고 <b>우리 / 상대</b>를 고른 뒤 추가하면 빈 칸부터 채워집니다.</li>
+        <li>이름을 비워두면 <b>아군1, 아군2</b> 또는 <b>적1, 적2</b> 순으로 자동으로 붙습니다.</li>
+        <li>한 진영에 배치할 수 있는 인원은 <b>최대 {{ maxUnits }}명</b>입니다. 칸은 16개지만 10명까지만 들어갑니다.</li>
+        <li><b>추가 후 직업 초기화</b>를 끄면 같은 직업을 연달아 추가할 때 직업이 그대로 남습니다.</li>
+        <li>배치된 캐릭터를 <b>끌어서</b> 다른 칸으로 옮길 수 있습니다. 마우스와 터치 모두 됩니다.</li>
+        <li>이미 다른 캐릭터가 있는 칸에 놓으면 <b>서로 자리를 바꿉니다.</b></li>
+        <li>우리 진형과 상대 진형 사이로도 끌어서 옮길 수 있습니다.</li>
+        <li>칸 번호는 게임과 동일합니다. 양쪽 <b>1번이 서로 맞닿는</b> 최전방입니다.</li>
+        <li>배치한 내용은 브라우저에 저장되어 다시 방문해도 남습니다.</li>
+      </ol>
+    </div>
+  </div>
+
   <div class="maker">
     <span>제작) Andante An가자미</span>
     <br>
@@ -632,6 +694,21 @@ import { dogamSets, boxAItems, boxBItems, chonbiItems, boxes } from './dogamData
 import { petEquipSets } from './petEquipData';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
+
+// 진형 판은 4x4 격자를 45도 돌린 다이아몬드다.
+const TILE_W = 84;
+const TILE_H = 60;
+// 칸은 16개지만 한 진영에 배치할 수 있는 인원은 10명이다.
+const MAX_UNITS = 10;
+// 게임 화면에서 확인한 직업별 색
+const JOB_COLORS = {
+  '오포지터': '#5fd0e8',
+  '스타슈터': '#7ee07e',
+  '배틀커맨더': '#ff8fd0',
+  '데스브링어': '#b98cff',
+  '하이프리스트': '#ffe9a8',
+  '마나로드': '#66d9c8',
+};
 
 export default {
   name: 'App',
@@ -784,6 +861,21 @@ export default {
 
         // Riding Pet Equipment
         petEquipSets,
+
+        // Formation Editor
+        formation: { mine: new Array(16).fill(null), enemy: new Array(16).fill(null) },
+        newUnit: { name: '', job: '', side: 'mine' },
+        formationMessage: '',
+        drag: null,
+        boardRefs: {},
+        boardOrder: ['enemy', 'mine'],
+        formationLocalStorageKey: 'formationLayout',
+        resetJobOnAdd: true,
+        maxUnits: MAX_UNITS,
+        jobOptions: [
+          '배틀커맨더', '소드 엠페러', '오포지터', '마나로드', '하이프리스트',
+          '홀리나이트', '스타슈터', '데드아이', '오버로드', '데스브링어',
+        ],
       };
     },
     computed: {
@@ -848,10 +940,17 @@ export default {
       if (!this.dogamHideOwned) return chonbiItems;
       return chonbiItems.filter(i => !i.key || !this.dogamOwned[i.key]);
     },
+    boardStyle() {
+      return { width: TILE_W * 4 + 'px', height: TILE_H * 4 + 'px' };
+    },
+    ghostStyle() {
+      return { left: this.drag.x + 'px', top: this.drag.y + 'px', width: TILE_W - 6 + 'px' };
+    },
   },
   mounted() {
     this.loadKillsRecords();
     this.loadDogamOwned();
+    this.loadFormation();
   },
   watch: {
     killsRecords: {
@@ -869,6 +968,169 @@ export default {
     },
   },
   methods: {
+    // Formation Editor Methods
+    setBoardRef(side, el) {
+      this.boardRefs[side] = el;
+    },
+    // 격자 좌표 (r, c) 를 다이아몬드 화면 좌표로 옮긴다
+    tilesOf(side) {
+      const slots = this.formation[side];
+      const tiles = [];
+      for (let i = 0; i < 16; i++) {
+        const r = Math.floor(i / 4);
+        const c = i % 4;
+        tiles.push({
+          i, r, c,
+          // 우리 진형은 앞쪽이 1번, 상대 진형은 뒤쪽이 16번이라 번호가 반대로 매겨진다
+          num: side === 'mine' ? i + 1 : 16 - i,
+          x: (c - r) * (TILE_W / 2) + TILE_W * 1.5,
+          y: (c + r) * (TILE_H / 2),
+          unit: slots[i],
+        });
+      }
+      return tiles;
+    },
+    tileStyle(tile) {
+      return {
+        left: tile.x + 'px',
+        top: tile.y + 'px',
+        width: TILE_W + 'px',
+        height: TILE_H + 'px',
+      };
+    },
+    jobColor(job) {
+      if (JOB_COLORS[job]) return JOB_COLORS[job];
+      let hash = 0;
+      for (let i = 0; i < job.length; i++) {
+        hash = (hash * 31 + job.charCodeAt(i)) % 360;
+      }
+      return `hsl(${hash}, 70%, 68%)`;
+    },
+    unitCount(side) {
+      return this.formation[side].filter(Boolean).length;
+    },
+    sideLabel(side) {
+      return side === 'mine' ? '우리' : '상대';
+    },
+    // 이름을 비워두면 아군1, 적1 처럼 자동으로 붙인다. 삭제 후에도 겹치지 않게 빈 번호를 찾는다.
+    autoName(side) {
+      const prefix = side === 'mine' ? '아군' : '적';
+      const used = new Set(this.formation[side].filter(Boolean).map(u => u.name));
+      let n = 1;
+      while (used.has(prefix + n)) n += 1;
+      return prefix + n;
+    },
+    addUnit() {
+      const side = this.newUnit.side;
+      const job = this.newUnit.job;
+      const name = this.newUnit.name || this.autoName(side);
+      if (!this.newUnit.name && !job) {
+        this.formationMessage = '이름이나 직업 중 하나는 입력해주세요.';
+        return;
+      }
+      if (this.unitCount(side) >= MAX_UNITS) {
+        this.formationMessage = this.sideLabel(side) + ' 진형은 최대 ' + MAX_UNITS + '명까지 배치할 수 있습니다.';
+        return;
+      }
+      const empty = this.formation[side].indexOf(null);
+      if (empty === -1) {
+        this.formationMessage = this.sideLabel(side) + ' 진형에 빈 칸이 없습니다.';
+        return;
+      }
+      this.formation[side][empty] = { name, job: job || '미지정' };
+      this.newUnit.name = '';
+      if (this.resetJobOnAdd) this.newUnit.job = '';
+      this.formationMessage = '';
+      this.saveFormation();
+    },
+    removeUnit(side, index) {
+      this.formation[side][index] = null;
+      this.saveFormation();
+    },
+    clearSide(side) {
+      this.formation[side] = new Array(16).fill(null);
+      this.saveFormation();
+    },
+    isDragging(side, index) {
+      return !!this.drag && this.drag.side === side && this.drag.index === index;
+    },
+    startDrag(side, tile, event) {
+      if (!tile.unit) return;
+      event.preventDefault();
+      this.drag = { side, index: tile.i, unit: tile.unit, x: event.clientX, y: event.clientY };
+      window.addEventListener('pointermove', this.onDragMove);
+      window.addEventListener('pointerup', this.onDragEnd);
+      window.addEventListener('pointercancel', this.onDragEnd);
+    },
+    onDragMove(event) {
+      if (!this.drag) return;
+      this.drag.x = event.clientX;
+      this.drag.y = event.clientY;
+    },
+    onDragEnd(event) {
+      window.removeEventListener('pointermove', this.onDragMove);
+      window.removeEventListener('pointerup', this.onDragEnd);
+      window.removeEventListener('pointercancel', this.onDragEnd);
+      if (!this.drag) return;
+      const target = this.hitTest(event.clientX, event.clientY);
+      if (target) this.moveUnit(this.drag.side, this.drag.index, target.side, target.index);
+      this.drag = null;
+    },
+    // 화면 좌표를 격자 좌표로 되돌려 어느 칸에 놓였는지 찾는다
+    hitTest(clientX, clientY) {
+      for (const side of this.boardOrder) {
+        const el = this.boardRefs[side];
+        if (!el) continue;
+        const rect = el.getBoundingClientRect();
+        if (clientX < rect.left || clientX > rect.right) continue;
+        if (clientY < rect.top || clientY > rect.bottom) continue;
+        const px = clientX - rect.left - TILE_W * 2;
+        const py = clientY - rect.top - TILE_H / 2;
+        const a = px / (TILE_W / 2);
+        const b = py / (TILE_H / 2);
+        const c = Math.round((a + b) / 2);
+        const r = Math.round((b - a) / 2);
+        if (r < 0 || r > 3 || c < 0 || c > 3) return null;
+        return { side, index: r * 4 + c };
+      }
+      return null;
+    },
+    moveUnit(fromSide, fromIndex, toSide, toIndex) {
+      if (fromSide === toSide && fromIndex === toIndex) return;
+      const moving = this.formation[fromSide][fromIndex];
+      const displaced = this.formation[toSide][toIndex];
+      // 빈 칸으로 진영을 넘어가면 인원이 늘어나므로 상한을 확인한다
+      if (fromSide !== toSide && !displaced && this.unitCount(toSide) >= MAX_UNITS) {
+        this.formationMessage = this.sideLabel(toSide) + ' 진형은 최대 ' + MAX_UNITS + '명까지 배치할 수 있습니다.';
+        return;
+      }
+      this.formationMessage = '';
+      this.formation[toSide][toIndex] = moving;
+      this.formation[fromSide][fromIndex] = displaced;
+      this.saveFormation();
+    },
+    saveFormation() {
+      localStorage.setItem(this.formationLocalStorageKey, JSON.stringify(this.formation));
+    },
+    loadFormation() {
+      const saved = localStorage.getItem(this.formationLocalStorageKey);
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        ['mine', 'enemy'].forEach(side => {
+          const slots = new Array(16).fill(null);
+          if (parsed && Array.isArray(parsed[side])) {
+            parsed[side].slice(0, 16).forEach((unit, i) => {
+              if (unit && unit.name) slots[i] = { name: unit.name, job: unit.job || '미지정' };
+            });
+          }
+          this.formation[side] = slots;
+        });
+      } catch (e) {
+        this.formation = { mine: new Array(16).fill(null), enemy: new Array(16).fill(null) };
+      }
+    },
+
     // Riding Pet Equipment Methods
     petColor(set, lightness) {
       return { backgroundColor: `hsl(${set.hue}, 75%, ${lightness}%)` };
@@ -1814,6 +2076,199 @@ h3, h4 {
 }
 
 .pet-guide li {
+  margin-bottom: 5px;
+}
+
+/* Formation Editor Styles */
+.formation-container {
+  margin-top: 20px;
+}
+
+.formation-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  justify-content: center;
+}
+
+.formation-form input[type="text"] {
+  flex: 1 1 100px;
+  min-width: 0;
+  padding: 7px 8px;
+  box-sizing: border-box;
+}
+
+.formation-form select {
+  padding: 7px 4px;
+}
+
+.formation-form button {
+  padding: 7px 14px;
+}
+
+.formation-reset-job {
+  flex: 1 1 100%;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.formation-reset-job input {
+  width: auto;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.formation-message {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: darkred;
+  font-weight: bold;
+}
+
+.formation-side {
+  margin-top: 16px;
+}
+
+.formation-side-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.formation-side-name {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.formation-side-name.mine {
+  color: #1a6ec4;
+}
+
+.formation-side-name.enemy {
+  color: #c43a1a;
+}
+
+.formation-count {
+  flex: 1 1 auto;
+  text-align: left;
+  font-size: 13px;
+  color: #666;
+}
+
+.formation-clear {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+.formation-board {
+  position: relative;
+  margin: 0 auto;
+  background-color: #0b1712;
+  border-radius: 6px;
+}
+
+.ftile {
+  position: absolute;
+}
+
+.ftile-bg {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background-color: #3d4f47;
+}
+
+.ftile-bg::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  background-color: #0b1712;
+}
+
+.ftile.occupied .ftile-bg {
+  background-color: #c3d64b;
+}
+
+.ftile-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: bold;
+  color: #4f635a;
+}
+
+.funit {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 78px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.25;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.funit.dragging {
+  opacity: 0.25;
+}
+
+.funit-name {
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: bold;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.funit-job {
+  max-width: 100%;
+  font-size: 10px;
+  font-weight: bold;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.funit-del {
+  position: absolute;
+  right: 2px;
+  top: -8px;
+  width: 17px;
+  height: 17px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid #7c1d1d;
+  background-color: #d03535;
+  color: white;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.drag-ghost {
+  position: fixed;
+  z-index: 20;
+  pointer-events: none;
+  padding: 3px 0;
+  border-radius: 4px;
+  background-color: rgba(11, 23, 18, 0.9);
+  outline: 2px solid #c3d64b;
+}
+
+.formation-guide li {
   margin-bottom: 5px;
 }
 </style>
