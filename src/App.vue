@@ -25,6 +25,7 @@
     <button :class="{ active: activeTab === 'move' }" @click="activeTab = 'move'">이속 계산기</button>
     <button :class="{ active: activeTab === 'kills' }" @click="activeTab = 'kills'">킬수 계산기</button>
     <button :class="{ active: activeTab === 'rune' }" @click="activeTab = 'rune'">룬 획득 정보</button>
+    <button :class="{ active: activeTab === 'dogam' }" @click="activeTab = 'dogam'">도감 / 확률</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -446,6 +447,145 @@
     </div>
   </div>
 
+  <!-- Collection / Box Probability -->
+  <div v-show="activeTab === 'dogam'">
+    <div class="dogam-container">
+      <h3>상자 우선순위</h3>
+      <p class="rune-note">아직 안 뽑은 아이템의 확률을 모두 더한 값입니다. 이 값이 클수록 한 번 열었을 때 새 아이템이 나올 가능성이 높습니다.</p>
+      <table class="dogam-priority">
+        <thead>
+        <tr>
+          <th>상자</th>
+          <th>남은 종류</th>
+          <th>남은 확률</th>
+          <th>신규 1개당 기대 횟수</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="b in boxStats" :key="b.id" :class="{ 'best-box': b.id === bestBoxId }">
+          <td class="box-name">
+            {{ b.label }}
+            <span v-if="b.id === bestBoxId" class="best-badge">추천</span>
+          </td>
+          <td>{{ b.remainCount }} / {{ b.total }}종</td>
+          <td class="remain-rate">{{ b.remainRate }}%</td>
+          <td>{{ b.expected === null ? '완료' : b.expected + '회' }}</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <div class="dogam-sections">
+        <button v-for="s in dogamSectionList" :key="s.id"
+                :class="{ active: dogamSection === s.id }"
+                @click="dogamSection = s.id">{{ s.label }}</button>
+      </div>
+
+      <div class="dogam-tools">
+        <label class="dogam-filter">
+          <input type="checkbox" v-model="dogamHideOwned"> 미보유만 보기
+        </label>
+        <span class="dogam-tool-buttons">
+          <button @click="setSectionOwned(true)">전체 체크</button>
+          <button @click="setSectionOwned(false)">전체 해제</button>
+        </span>
+      </div>
+
+      <!-- 도감세트 -->
+      <table v-if="dogamSection === 'sets'" class="dogam-table dogam-set-table">
+        <thead>
+        <tr>
+          <th>분류</th>
+          <th>아이템명</th>
+          <th>출처</th>
+          <th>확률</th>
+          <th>보유</th>
+        </tr>
+        </thead>
+        <tbody>
+        <template v-for="g in visibleSetGroups" :key="g.no">
+          <tr class="set-head">
+            <td colspan="5">
+              {{ g.no }}. {{ g.set }}
+              <span class="set-progress" :class="{ done: g.ownedCount === g.total }">{{ g.ownedCount }}/{{ g.total }}</span>
+            </td>
+          </tr>
+          <tr v-for="(it, i) in g.items" :key="i" :class="{ owned: isOwned(it.key) }">
+            <td>{{ it.cat }}</td>
+            <td class="item-name">{{ it.name }}</td>
+            <td :class="{ 'src-box': isBoxSource(it.src) }">{{ it.src || '-' }}</td>
+            <td>{{ it.rate === null ? '-' : it.rate + '%' }}</td>
+            <td><input type="checkbox" :checked="isOwned(it.key)" @change="toggleOwned(it.key)"></td>
+          </tr>
+        </template>
+        <tr v-if="!visibleSetGroups.length">
+          <td colspan="5" class="dogam-empty">표시할 항목이 없습니다.</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <!-- 촌장의 비밀상자 -->
+      <table v-else-if="dogamSection === '촌비'" class="dogam-table dogam-chonbi-table">
+        <thead>
+        <tr>
+          <th>분류</th>
+          <th>아이템명</th>
+          <th>확률</th>
+          <th>보유</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(it, i) in visibleChonbiItems" :key="i" :class="{ owned: it.key && isOwned(it.key) }">
+          <td>{{ it.cat }}</td>
+          <td class="item-name">{{ it.name }}</td>
+          <td>{{ it.rate }}%</td>
+          <td>
+            <input v-if="it.key" type="checkbox" :checked="isOwned(it.key)" @change="toggleOwned(it.key)">
+            <span v-else class="not-collectible">비수집</span>
+          </td>
+        </tr>
+        <tr v-if="!visibleChonbiItems.length">
+          <td colspan="4" class="dogam-empty">표시할 항목이 없습니다.</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <!-- 반짝반짝 코스튬 상자 A / B -->
+      <table v-else class="dogam-table dogam-box-table">
+        <thead>
+        <tr>
+          <th>분류</th>
+          <th>아이템명</th>
+          <th>도감효과</th>
+          <th>확률</th>
+          <th>보유</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="(it, i) in visibleBoxItems" :key="i" :class="{ owned: isOwned(it.key) }">
+          <td>{{ it.cat }}</td>
+          <td class="item-name">{{ it.name }}</td>
+          <td class="item-eff">{{ it.eff || '-' }}</td>
+          <td>{{ it.rate }}%</td>
+          <td><input type="checkbox" :checked="isOwned(it.key)" @change="toggleOwned(it.key)"></td>
+        </tr>
+        <tr v-if="!visibleBoxItems.length">
+          <td colspan="5" class="dogam-empty">표시할 항목이 없습니다.</td>
+        </tr>
+        </tbody>
+      </table>
+
+      <ol class="dogam-guide">
+        <h3>⭐ 사용 가이드</h3>
+        <li>체크한 내용은 브라우저에 저장되어 다시 방문해도 그대로 남습니다.</li>
+        <li>반짝A, 반짝B, 촌장의 비밀상자에서 체크하면 <b>도감세트에도 자동으로 반영</b>됩니다. 반대로 도감세트에서 체크해도 상자 쪽에 반영됩니다.</li>
+        <li><b>상자 우선순위</b>의 남은 확률이 가장 높은 상자를 여는 것이 새 아이템을 얻기에 가장 유리합니다.</li>
+        <li>촌장의 비밀상자는 코스튬류만 도감에 등록되므로, 재화 같은 비수집 항목은 계산에서 빠집니다.</li>
+        <li>도감세트에서 앞뜰, 보석, 어금니처럼 상자가 아닌 출처의 항목은 직접 체크하시면 됩니다.</li>
+        <li>처음 쓰실 때는 <b>전체 체크</b>로 채운 뒤 아직 없는 것만 해제하시는 편이 빠릅니다.</li>
+      </ol>
+    </div>
+  </div>
+
   <div class="maker">
     <span>제작) Andante An가자미</span>
     <br>
@@ -454,6 +594,10 @@
 </template>
 
 <script>
+import { dogamSets, boxAItems, boxBItems, chonbiItems, boxes } from './dogamData';
+
+const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
+
 export default {
   name: 'App',
     data() {
@@ -590,6 +734,18 @@ export default {
           { tier: '2차 스킬룬', runes: ['듀얼웨폰', '데스코일', '필버라이즈', '블레싱', '실버웨폰', '다크웨폰', '레인폴', '스나이핑', '서몬피닉스', '블리자드', '스톤커즈', '메테오'] },
           { tier: '3차 스킬룬', runes: ['배틀샤우트', '오라블레이드', '싸이클론', '디펜스오라', '핸즈오브갓', '익스큐션', '송오브피스', '포이즌봄', '미스틱애로우', '서몬퍼밀리어', '폴리모프', '나이트메어'] },
         ],
+
+        // Collection / Box Probability
+        dogamOwned: {},
+        dogamSection: 'sets',
+        dogamHideOwned: false,
+        dogamLocalStorageKey: 'dogamOwnedItems',
+        dogamSectionList: [
+          { id: 'sets', label: '도감세트' },
+          { id: '반짝A', label: '반짝A' },
+          { id: '반짝B', label: '반짝B' },
+          { id: '촌비', label: '촌장의 비밀상자' },
+        ],
       };
     },
     computed: {
@@ -610,9 +766,54 @@ export default {
         };
       });
     },
+    // 상자별 미보유 종류 수와 확률 합계 — 값이 클수록 새 아이템이 나올 가능성이 높다
+    boxStats() {
+      return boxes.map(box => {
+        const remain = box.items.filter(item => !this.dogamOwned[item.key]);
+        const remainRate = remain.reduce((sum, item) => sum + (item.rate || 0), 0);
+        return {
+          id: box.id,
+          label: box.label,
+          total: box.items.length,
+          remainCount: remain.length,
+          remainRate: Math.round(remainRate * 1000) / 1000,
+          expected: remainRate > 0 ? Math.ceil(100 / remainRate) : null,
+        };
+      });
+    },
+    bestBoxId() {
+      const best = this.boxStats.reduce(
+        (acc, b) => (b.remainRate > acc.remainRate ? b : acc),
+        { remainRate: 0, id: null }
+      );
+      return best.remainRate > 0 ? best.id : null;
+    },
+    visibleSetGroups() {
+      const groups = [];
+      let current = null;
+      dogamSets.forEach(item => {
+        if (!current || current.no !== item.no) {
+          current = { no: item.no, set: item.set, items: [], ownedCount: 0, total: 0 };
+          groups.push(current);
+        }
+        current.total += 1;
+        if (this.dogamOwned[item.key]) current.ownedCount += 1;
+        if (!this.dogamHideOwned || !this.dogamOwned[item.key]) current.items.push(item);
+      });
+      return groups.filter(g => g.items.length > 0);
+    },
+    visibleBoxItems() {
+      const items = this.dogamSection === '반짝A' ? boxAItems : boxBItems;
+      return this.dogamHideOwned ? items.filter(i => !this.dogamOwned[i.key]) : items;
+    },
+    visibleChonbiItems() {
+      if (!this.dogamHideOwned) return chonbiItems;
+      return chonbiItems.filter(i => !i.key || !this.dogamOwned[i.key]);
+    },
   },
   mounted() {
     this.loadKillsRecords();
+    this.loadDogamOwned();
   },
   watch: {
     killsRecords: {
@@ -630,6 +831,54 @@ export default {
     },
   },
   methods: {
+    // Collection / Box Probability Methods
+    isOwned(key) {
+      return !!this.dogamOwned[key];
+    },
+    isBoxSource(src) {
+      return BOX_SOURCES.indexOf(src) !== -1;
+    },
+    toggleOwned(key) {
+      if (this.dogamOwned[key]) {
+        delete this.dogamOwned[key];
+      } else {
+        this.dogamOwned[key] = true;
+      }
+      this.saveDogamOwned();
+    },
+    // 현재 보고 있는 섹션의 항목 전체를 한 번에 체크/해제한다
+    setSectionOwned(value) {
+      let keys;
+      if (this.dogamSection === 'sets') {
+        keys = dogamSets.map(i => i.key);
+      } else if (this.dogamSection === '촌비') {
+        keys = chonbiItems.filter(i => i.key).map(i => i.key);
+      } else {
+        keys = (this.dogamSection === '반짝A' ? boxAItems : boxBItems).map(i => i.key);
+      }
+      keys.forEach(key => {
+        if (value) {
+          this.dogamOwned[key] = true;
+        } else {
+          delete this.dogamOwned[key];
+        }
+      });
+      this.saveDogamOwned();
+    },
+    saveDogamOwned() {
+      localStorage.setItem(this.dogamLocalStorageKey, JSON.stringify(this.dogamOwned));
+    },
+    loadDogamOwned() {
+      const saved = localStorage.getItem(this.dogamLocalStorageKey);
+      if (saved) {
+        try {
+          this.dogamOwned = JSON.parse(saved) || {};
+        } catch (e) {
+          this.dogamOwned = {};
+        }
+      }
+    },
+
     // Rune Drop Info Methods
     blockHeaders(block) {
       return Array.from({ length: 10 }, (_, i) => {
@@ -1273,6 +1522,171 @@ h3, h4 {
 }
 
 .rune-guide li {
+  margin-bottom: 5px;
+}
+
+/* Collection / Box Probability Styles */
+.dogam-container {
+  margin-top: 20px;
+}
+
+.dogam-priority {
+  font-size: 13px;
+}
+
+.dogam-priority .box-name {
+  text-align: left;
+  font-weight: bold;
+}
+
+.dogam-priority .remain-rate {
+  font-weight: bold;
+  color: darkblue;
+}
+
+.dogam-priority tr.best-box {
+  background-color: #fff4d6;
+}
+
+.dogam-priority tr.best-box .remain-rate {
+  color: darkred;
+}
+
+.best-badge {
+  display: inline-block;
+  margin-left: 5px;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background-color: #d40000;
+  color: white;
+  font-size: 11px;
+}
+
+.dogam-sections {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.dogam-sections button {
+  flex: 1 1 20%;
+  font-size: 13px;
+  padding: 8px 5px;
+}
+
+.dogam-sections button.active {
+  background-color: #2c3e50;
+  color: white;
+}
+
+.dogam-tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0;
+}
+
+.dogam-filter {
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.dogam-filter input {
+  width: auto;
+  margin-right: 4px;
+  vertical-align: middle;
+}
+
+.dogam-tool-buttons button {
+  font-size: 12px;
+  padding: 6px 10px;
+  margin-left: 5px;
+}
+
+.dogam-table {
+  font-size: 12px;
+}
+
+.dogam-table th, .dogam-table td {
+  padding: 5px 4px;
+  word-break: break-word;
+}
+
+.dogam-table .item-name {
+  text-align: left;
+  font-weight: bold;
+}
+
+.dogam-table .item-eff {
+  font-size: 11px;
+  color: #555;
+}
+
+.dogam-table input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+.dogam-table tr.owned {
+  background-color: #f2f7f2;
+  color: #999;
+}
+
+.dogam-table tr.owned .item-name {
+  font-weight: normal;
+}
+
+.dogam-table .src-box {
+  color: darkblue;
+  font-weight: bold;
+}
+
+.dogam-table .not-collectible {
+  font-size: 11px;
+  color: #aaa;
+}
+
+.dogam-table .dogam-empty {
+  padding: 20px;
+  color: #888;
+}
+
+.dogam-set-table .set-head td {
+  background-color: #e8eaed;
+  text-align: left;
+  font-weight: bold;
+  font-size: 13px;
+}
+
+.set-progress {
+  float: right;
+  font-size: 12px;
+  color: #d40000;
+}
+
+.set-progress.done {
+  color: green;
+}
+
+.dogam-set-table th:nth-child(1), .dogam-set-table td:nth-child(1) { width: 16%; }
+.dogam-set-table th:nth-child(3), .dogam-set-table td:nth-child(3) { width: 22%; }
+.dogam-set-table th:nth-child(4), .dogam-set-table td:nth-child(4) { width: 15%; }
+.dogam-set-table th:nth-child(5), .dogam-set-table td:nth-child(5) { width: 13%; }
+
+.dogam-box-table th:nth-child(1), .dogam-box-table td:nth-child(1) { width: 14%; }
+.dogam-box-table th:nth-child(3), .dogam-box-table td:nth-child(3) { width: 24%; }
+.dogam-box-table th:nth-child(4), .dogam-box-table td:nth-child(4) { width: 13%; }
+.dogam-box-table th:nth-child(5), .dogam-box-table td:nth-child(5) { width: 13%; }
+
+.dogam-chonbi-table th:nth-child(1), .dogam-chonbi-table td:nth-child(1) { width: 20%; }
+.dogam-chonbi-table th:nth-child(3), .dogam-chonbi-table td:nth-child(3) { width: 15%; }
+.dogam-chonbi-table th:nth-child(4), .dogam-chonbi-table td:nth-child(4) { width: 15%; }
+
+.dogam-guide li {
   margin-bottom: 5px;
 }
 </style>
