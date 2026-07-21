@@ -26,6 +26,7 @@
     <button :class="{ active: activeTab === 'kills' }" @click="activeTab = 'kills'">킬수 계산기</button>
     <button :class="{ active: activeTab === 'rune' }" @click="activeTab = 'rune'">룬 획득 정보</button>
     <button :class="{ active: activeTab === 'dogam' }" @click="activeTab = 'dogam'">도감 / 확률</button>
+    <button :class="{ active: activeTab === 'pet' }" @click="activeTab = 'pet'">펫 장비</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -586,6 +587,39 @@
     </div>
   </div>
 
+  <!-- Riding Pet Equipment -->
+  <div v-show="activeTab === 'pet'">
+    <div class="pet-container">
+      <h3>라이딩펫 장비 설명서</h3>
+      <p class="rune-note">적용 스킬 설명과 적용 직업을 한 칸에 합쳐서 보여줍니다.</p>
+
+      <div v-for="set in petEquipSets" :key="set.name" class="pet-set">
+        <div class="pet-set-head" :style="petColor(set, 78)">{{ set.name }}</div>
+        <div v-for="item in set.items" :key="item.part" class="pet-item">
+          <div class="pet-item-head">
+            <span class="pet-part" :style="petColor(set, 88)">{{ item.part }}</span>
+            <span class="pet-option">{{ item.option }}</span>
+          </div>
+          <div v-if="item.note" class="pet-detail">
+            <p class="pet-note">{{ item.note }}</p>
+            <div class="pet-chips">
+              <span v-for="j in item.jobs" :key="j.job + j.skill" class="pet-job">
+                <b>{{ j.job }}</b> · {{ j.skill }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ol class="pet-guide">
+        <h3>⭐ 참고</h3>
+        <li>세트당 <b>편자 · 안장 · 고삐</b> 세 부위로 구성됩니다.</li>
+        <li>적용 대상이 정해진 옵션만 아래에 설명과 직업이 함께 표시됩니다.</li>
+        <li>파란 칩은 <b>직업 · 해당 스킬</b>을 뜻합니다.</li>
+      </ol>
+    </div>
+  </div>
+
   <div class="maker">
     <span>제작) Andante An가자미</span>
     <br>
@@ -595,6 +629,7 @@
 
 <script>
 import { dogamSets, boxAItems, boxBItems, chonbiItems, boxes } from './dogamData';
+import { petEquipSets } from './petEquipData';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
 
@@ -746,6 +781,9 @@ export default {
           { id: '반짝B', label: '반짝B' },
           { id: '촌비', label: '촌장의 비밀상자' },
         ],
+
+        // Riding Pet Equipment
+        petEquipSets,
       };
     },
     computed: {
@@ -831,6 +869,11 @@ export default {
     },
   },
   methods: {
+    // Riding Pet Equipment Methods
+    petColor(set, lightness) {
+      return { backgroundColor: `hsl(${set.hue}, 75%, ${lightness}%)` };
+    },
+
     // Collection / Box Probability Methods
     isOwned(key) {
       return !!this.dogamOwned[key];
@@ -1687,6 +1730,90 @@ h3, h4 {
 .dogam-chonbi-table th:nth-child(4), .dogam-chonbi-table td:nth-child(4) { width: 15%; }
 
 .dogam-guide li {
+  margin-bottom: 5px;
+}
+
+/* Riding Pet Equipment Styles */
+.pet-container {
+  margin-top: 20px;
+}
+
+.pet-set {
+  border: 1px solid #2c3e50;
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+
+.pet-set-head {
+  padding: 8px 10px;
+  font-weight: bold;
+  font-size: 15px;
+  text-align: left;
+  border-bottom: 1px solid #2c3e50;
+}
+
+.pet-item {
+  border-bottom: 1px solid #dcdcdc;
+  padding: 8px 10px;
+  text-align: left;
+}
+
+.pet-item:last-child {
+  border-bottom: none;
+}
+
+.pet-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pet-part {
+  flex: 0 0 auto;
+  padding: 2px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.pet-option {
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.4;
+}
+
+.pet-detail {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: #f7f7f7;
+}
+
+.pet-note {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #555;
+  line-height: 1.5;
+}
+
+.pet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pet-job {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  background-color: #dbe7f5;
+  color: #1c3d63;
+}
+
+.pet-guide li {
   margin-bottom: 5px;
 }
 </style>
