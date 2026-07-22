@@ -32,7 +32,6 @@ export const petEquipSets = [
           { job: '다크로드', skill: '폴리모프' },
           { job: '헌터특성', skill: '커즈' },
           { job: '스타슈터', skill: '쇠약의 별' },
-          { job: '데스브링어', skill: '미스텔테인' },
         ],
       },
       {
@@ -56,6 +55,7 @@ export const petEquipSets = [
         jobs: [
           { job: '다크팔라딘', skill: '다크웨폰' },
           { job: '서모닉아처', skill: '서몬피닉스' },
+          { job: '데스브링어', skill: '미스텔테인' },
         ],
       },
     ],
