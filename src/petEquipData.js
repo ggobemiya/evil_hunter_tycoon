@@ -40,7 +40,7 @@ export const petEquipSets = [
         note: '"방어무시 효과"를 가진 공격을 쓰는 직업입니다. 오라블레이드, 핸즈오브갓, 익스큐션, 미스틱애로우는 방어와 회피를 무시한 공격에만 적용됩니다.',
         jobs: [
           { job: '소드세인트', skill: '오라블레이드' },
-          { job: '템플러', skill: '핸즈오브갓' },
+          { job: '인퀴지터', skill: '핸즈오브갓' },
           { job: '스카우트', skill: '포이즌봄' },
           { job: '워리어', skill: '펄버라이즈' },
           { job: '디스트로이어', skill: '싸이클론' },
@@ -75,6 +75,7 @@ export const petEquipSets = [
           { job: '오포지터', skill: '아이스 실드' },
           { job: '소드엠페러', skill: '데스아머' },
           { job: '하이프리스트', skill: '빛의 은총' },
+          { job: '하이프리스트', skill: '생명의 빛' },
         ],
       },
       { part: '안장', option: '주변 아군의 방어력 20% 증폭' },
