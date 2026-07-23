@@ -661,6 +661,17 @@
           </div>
           <p v-if="shareBox.message" class="formation-share-msg">{{ shareBox.message }}</p>
         </div>
+        <div class="formation-presets">
+          <div class="formation-preset-title">프리셋</div>
+          <div v-for="(preset, i) in formationPresets[side]" :key="i" class="formation-preset-row"
+               :class="{ filled: !!preset.code }">
+            <input v-model="preset.name" class="formation-preset-name" maxlength="16"
+                   :placeholder="'프리셋 ' + (i + 1)" @change="savePresets">
+            <button class="formation-preset-save" @click="savePreset(side, i)">저장</button>
+            <button class="formation-preset-load" :disabled="!preset.code" @click="applyPreset(side, i)">불러오기</button>
+          </div>
+          <p v-if="presetMessage.side === side" class="formation-share-msg">{{ presetMessage.text }}</p>
+        </div>
         <div class="formation-board" :ref="el => setBoardRef(side, el)" :style="boardStyle">
           <div v-for="tile in tilesOf(side)" :key="tile.i"
                class="ftile" :class="{ occupied: !!tile.unit }" :style="tileStyle(tile)">
@@ -693,6 +704,7 @@
         <li>칸 번호는 게임과 동일합니다. 양쪽 <b>1번이 서로 맞닿는</b> 최전방입니다.</li>
         <li>배치한 내용은 브라우저에 저장되어 다시 방문해도 남습니다.</li>
         <li><b>추출</b>로 진영 배치를 코드로 뽑아 남에게 주고, <b>로드</b>로 받은 코드를 붙여넣어 그대로 재현할 수 있습니다. 우리 / 상대 진형은 각각 따로 다룹니다.</li>
+        <li><b>프리셋</b> 5칸에 자주 쓰는 배치를 저장해두고 불러올 수 있습니다. <b>저장</b>은 현재 배치를 그 칸에 담고, 이름은 직접 입력합니다. 프리셋도 브라우저에 저장됩니다.</li>
       </ol>
     </div>
   </div>
@@ -995,6 +1007,13 @@ export default {
         boardOrder: ['enemy', 'mine'],
         formationLocalStorageKey: 'formationLayout',
         shareBox: { side: null, mode: 'export', text: '', message: '' },
+        // 진영별 프리셋 5칸 (이름 + 추출 코드)
+        formationPresets: {
+          mine: Array.from({ length: 5 }, () => ({ name: '', code: '' })),
+          enemy: Array.from({ length: 5 }, () => ({ name: '', code: '' })),
+        },
+        presetMessage: { side: null, text: '' },
+        presetLocalStorageKey: 'formationPresets',
         resetJobOnAdd: true,
         maxUnits: MAX_UNITS,
         jobOptions: [
@@ -1085,6 +1104,7 @@ export default {
     this.loadKillsRecords();
     this.loadDogamOwned();
     this.loadFormation();
+    this.loadPresets();
   },
   watch: {
     killsRecords: {
@@ -1239,21 +1259,66 @@ export default {
         this.shareBox.message = '텍스트를 직접 선택해 복사해주세요.';
       }
     },
-    loadSide(side) {
+    // 코드 문자열을 진영에 적용한다. 성공하면 null, 실패하면 에러 메시지를 반환한다.
+    applyCode(side, code) {
       let slots;
       try {
-        slots = this.decodeSide(this.shareBox.text);
+        slots = this.decodeSide(code);
       } catch (e) {
-        this.shareBox.message = e.message || '배치 코드를 해석할 수 없습니다.';
-        return;
+        return e.message || '배치 코드를 해석할 수 없습니다.';
       }
       if (slots.filter(Boolean).length > MAX_UNITS) {
-        this.shareBox.message = '한 진영은 최대 ' + MAX_UNITS + '명까지만 불러올 수 있습니다.';
-        return;
+        return '한 진영은 최대 ' + MAX_UNITS + '명까지만 불러올 수 있습니다.';
       }
       this.formation[side] = slots;
       this.saveFormation();
+      return null;
+    },
+    loadSide(side) {
+      const err = this.applyCode(side, this.shareBox.text);
+      if (err) {
+        this.shareBox.message = err;
+        return;
+      }
       this.shareBox.side = null;
+    },
+    // 현재 배치를 프리셋 슬롯에 저장한다
+    savePreset(side, index) {
+      this.formationPresets[side][index].code = this.encodeSide(side);
+      this.savePresets();
+      this.setPresetMessage(side, (index + 1) + '번 프리셋에 현재 배치를 저장했습니다.');
+    },
+    // 프리셋 슬롯의 배치를 불러온다
+    applyPreset(side, index) {
+      const preset = this.formationPresets[side][index];
+      if (!preset.code) return;
+      const err = this.applyCode(side, preset.code);
+      const label = preset.name || (index + 1) + '번 프리셋';
+      this.setPresetMessage(side, err || label + ' 을(를) 불러왔습니다.');
+    },
+    setPresetMessage(side, text) {
+      this.presetMessage = { side, text };
+    },
+    savePresets() {
+      localStorage.setItem(this.presetLocalStorageKey, JSON.stringify(this.formationPresets));
+    },
+    loadPresets() {
+      const saved = localStorage.getItem(this.presetLocalStorageKey);
+      if (!saved) return;
+      try {
+        const parsed = JSON.parse(saved);
+        ['mine', 'enemy'].forEach(side => {
+          const slots = Array.from({ length: 5 }, () => ({ name: '', code: '' }));
+          if (parsed && Array.isArray(parsed[side])) {
+            parsed[side].slice(0, 5).forEach((p, i) => {
+              if (p) slots[i] = { name: p.name || '', code: p.code || '' };
+            });
+          }
+          this.formationPresets[side] = slots;
+        });
+      } catch (e) {
+        // 저장된 프리셋이 손상된 경우 기본값 유지
+      }
     },
     isDragging(side, index) {
       return !!this.drag && this.drag.side === side && this.drag.index === index;
@@ -2400,6 +2465,46 @@ h3, h4 {
   font-size: 12px;
   color: #1a6ec4;
   font-weight: bold;
+}
+
+.formation-presets {
+  margin: 8px 0;
+}
+
+.formation-preset-title {
+  font-size: 13px;
+  font-weight: bold;
+  text-align: left;
+  margin-bottom: 4px;
+}
+
+.formation-preset-row {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 4px;
+}
+
+.formation-preset-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 5px 7px;
+  box-sizing: border-box;
+  font-size: 12px;
+}
+
+.formation-preset-row.filled .formation-preset-name {
+  background-color: #eef5ff;
+}
+
+.formation-preset-save, .formation-preset-load {
+  flex: 0 0 auto;
+  font-size: 12px;
+  padding: 5px 10px;
+}
+
+.formation-preset-load:disabled {
+  color: #aaa;
+  cursor: not-allowed;
 }
 
 .formation-board {
