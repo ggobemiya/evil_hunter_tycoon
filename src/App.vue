@@ -646,7 +646,20 @@
         <div class="formation-side-head">
           <span class="formation-side-name" :class="side">{{ side === 'mine' ? '우리 진형' : '상대 진형' }}</span>
           <span class="formation-count">{{ unitCount(side) }} / {{ maxUnits }}</span>
+          <button class="formation-share" @click="exportSide(side)">추출</button>
+          <button class="formation-share" @click="openLoad(side)">로드</button>
           <button class="formation-clear" @click="clearSide(side)">비우기</button>
+        </div>
+        <div v-if="shareBox.side === side" class="formation-share-box">
+          <textarea v-model="shareBox.text" class="formation-share-text" rows="2"
+                    :placeholder="shareBox.mode === 'export' ? '' : '받은 배치 코드를 붙여넣으세요'"
+                    @focus="$event.target.select()"></textarea>
+          <div class="formation-share-actions">
+            <button v-if="shareBox.mode === 'export'" @click="copyShare">복사</button>
+            <button v-else @click="loadSide(side)">불러오기</button>
+            <button @click="shareBox.side = null">닫기</button>
+          </div>
+          <p v-if="shareBox.message" class="formation-share-msg">{{ shareBox.message }}</p>
         </div>
         <div class="formation-board" :ref="el => setBoardRef(side, el)" :style="boardStyle">
           <div v-for="tile in tilesOf(side)" :key="tile.i"
@@ -679,6 +692,7 @@
         <li>우리 진형과 상대 진형 사이로도 끌어서 옮길 수 있습니다.</li>
         <li>칸 번호는 게임과 동일합니다. 양쪽 <b>1번이 서로 맞닿는</b> 최전방입니다.</li>
         <li>배치한 내용은 브라우저에 저장되어 다시 방문해도 남습니다.</li>
+        <li><b>추출</b>로 진영 배치를 코드로 뽑아 남에게 주고, <b>로드</b>로 받은 코드를 붙여넣어 그대로 재현할 수 있습니다. 우리 / 상대 진형은 각각 따로 다룹니다.</li>
       </ol>
     </div>
   </div>
@@ -980,6 +994,7 @@ export default {
         boardRefs: {},
         boardOrder: ['enemy', 'mine'],
         formationLocalStorageKey: 'formationLayout',
+        shareBox: { side: null, mode: 'export', text: '', message: '' },
         resetJobOnAdd: true,
         maxUnits: MAX_UNITS,
         jobOptions: [
@@ -1174,6 +1189,71 @@ export default {
     clearSide(side) {
       this.formation[side] = new Array(16).fill(null);
       this.saveFormation();
+    },
+    // 진영 배치를 남에게 줄 수 있는 코드 문자열로 만든다.
+    // 형식: "EHT1:" + (칸번호|이름|직업) 을 세미콜론으로 이은 뒤 UTF-8 base64
+    encodeSide(side) {
+      const parts = [];
+      this.formation[side].forEach((unit, i) => {
+        if (unit) parts.push([i, unit.name, unit.job].join('|'));
+      });
+      const body = parts.join(';');
+      // 한글이 있으므로 UTF-8 바이트로 변환 후 base64
+      const b64 = btoa(String.fromCharCode(...new TextEncoder().encode(body)));
+      return 'EHT1:' + b64;
+    },
+    decodeSide(code) {
+      const trimmed = (code || '').trim();
+      if (trimmed.indexOf('EHT1:') !== 0) {
+        throw new Error('배치 코드 형식이 아닙니다.');
+      }
+      const bin = atob(trimmed.slice(5));
+      const bytes = Uint8Array.from(bin, ch => ch.charCodeAt(0));
+      const body = new TextDecoder().decode(bytes);
+      const slots = new Array(16).fill(null);
+      if (body) {
+        body.split(';').forEach(part => {
+          const [idx, name, job] = part.split('|');
+          const i = Number(idx);
+          if (Number.isInteger(i) && i >= 0 && i < 16 && name) {
+            slots[i] = { name, job: job || '미지정' };
+          }
+        });
+      }
+      return slots;
+    },
+    exportSide(side) {
+      this.shareBox = { side, mode: 'export', text: this.encodeSide(side), message: '' };
+    },
+    openLoad(side) {
+      this.shareBox = { side, mode: 'load', text: '', message: '' };
+    },
+    copyShare() {
+      const text = this.shareBox.text;
+      const done = () => { this.shareBox.message = '복사했습니다.'; };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(() => {
+          this.shareBox.message = '복사에 실패했습니다. 직접 선택해 복사해주세요.';
+        });
+      } else {
+        this.shareBox.message = '텍스트를 직접 선택해 복사해주세요.';
+      }
+    },
+    loadSide(side) {
+      let slots;
+      try {
+        slots = this.decodeSide(this.shareBox.text);
+      } catch (e) {
+        this.shareBox.message = e.message || '배치 코드를 해석할 수 없습니다.';
+        return;
+      }
+      if (slots.filter(Boolean).length > MAX_UNITS) {
+        this.shareBox.message = '한 진영은 최대 ' + MAX_UNITS + '명까지만 불러올 수 있습니다.';
+        return;
+      }
+      this.formation[side] = slots;
+      this.saveFormation();
+      this.shareBox.side = null;
     },
     isDragging(side, index) {
       return !!this.drag && this.drag.side === side && this.drag.index === index;
@@ -2282,9 +2362,44 @@ h3, h4 {
   color: #666;
 }
 
-.formation-clear {
+.formation-clear, .formation-share {
   font-size: 12px;
   padding: 4px 10px;
+}
+
+.formation-share-box {
+  margin: 6px 0 2px;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  background-color: #f7f7f7;
+}
+
+.formation-share-text {
+  width: 100%;
+  box-sizing: border-box;
+  font-size: 12px;
+  font-family: monospace;
+  resize: vertical;
+  word-break: break-all;
+}
+
+.formation-share-actions {
+  margin-top: 6px;
+  display: flex;
+  gap: 6px;
+}
+
+.formation-share-actions button {
+  font-size: 12px;
+  padding: 4px 12px;
+}
+
+.formation-share-msg {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #1a6ec4;
+  font-weight: bold;
 }
 
 .formation-board {
