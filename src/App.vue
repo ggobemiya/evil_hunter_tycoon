@@ -29,6 +29,7 @@
     <button :class="{ active: activeTab === 'pet' }" @click="activeTab = 'pet'">펫 장비</button>
     <button :class="{ active: activeTab === 'formation' }" @click="activeTab = 'formation'">승전 진형 편집기</button>
     <button :class="{ active: activeTab === 'league' }" @click="activeTab = 'league'">챌린저스 리그</button>
+    <button :class="{ active: activeTab === 'equipGrade' }" @click="activeTab = 'equipGrade'">장비 옵션 등급표</button>
   </div>
 
   <!-- Attack Speed Calculator -->
@@ -799,6 +800,59 @@
     </div>
   </div>
 
+  <!-- Equipment Option Grade -->
+  <div v-show="activeTab === 'equipGrade'">
+    <div class="equip-grade-container">
+      <div class="equip-grade-tabs">
+        <button v-for="g in equipGrades" :key="g.id"
+                :class="{ active: equipGradeTier === g.id }"
+                @click="equipGradeTier = g.id">{{ g.id }}</button>
+      </div>
+
+      <h3>{{ currentEquipGrade.label }} 장비 옵션 등급표</h3>
+
+      <div class="rune-scroll">
+        <table class="equip-grade-table">
+          <thead>
+          <tr>
+            <th class="equip-opt-head">장비 공통 옵션</th>
+            <th v-for="h in equipTierHeaders" :key="h" :style="equipGradeHeadStyle(h)">{{ h }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="(row, i) in currentEquipGrade.common" :key="i">
+            <td class="equip-opt">{{ row.opts }}</td>
+            <td v-for="(val, j) in row.v" :key="j" :style="equipGradeCellStyle(j)">{{ val }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="rune-scroll">
+        <table class="equip-grade-table">
+          <thead>
+          <tr>
+            <th class="equip-opt-head weapon">무기 전용 옵션</th>
+            <th v-for="h in equipTierHeaders" :key="h" :style="equipGradeHeadStyle(h)">{{ h }}</th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr v-for="(row, i) in currentEquipGrade.weapon" :key="i">
+            <td class="equip-opt">{{ row.opts }}</td>
+            <td v-for="(val, j) in row.v" :key="j" :style="equipGradeCellStyle(j)">{{ val }}</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <ol class="rune-guide">
+        <h3>⭐ 참고</h3>
+        <li>수치는 각 등급(MAX ~ C)에서 나올 수 있는 <b>옵션 최대치</b>입니다.</li>
+        <li>같은 행에 묶인 옵션들은 등급별 수치가 동일합니다.</li>
+      </ol>
+    </div>
+  </div>
+
   <div class="maker">
     <div v-for="(credit, i) in currentCredits" :key="i">{{ credit.role }}) {{ credit.name }}</div>
   </div>
@@ -808,6 +862,7 @@
 import { dogamSets, boxAItems, boxBItems, chonbiItems, boxes } from './dogamData';
 import { petEquipSets } from './petEquipData';
 import { challengerTiers, challengerGroups, rankingRewards, participationRewards } from './challengerData';
+import { equipGrades, equipTierHeaders, equipGradeColors } from './equipGradeData';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
 
@@ -846,6 +901,7 @@ export default {
                 pet: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 formation: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 league: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                equipGrade: [{ role: '제작', name: 'Stella 꼬뱀별' }],
               },
         // Attack Speed Calculator
         job: '',
@@ -998,6 +1054,11 @@ export default {
         participationRewards,
         myRating: null,
 
+        // Equipment Option Grade
+        equipGrades,
+        equipTierHeaders,
+        equipGradeTier: '태초',
+
         // Formation Editor
         formation: { mine: new Array(16).fill(null), enemy: new Array(16).fill(null) },
         newUnit: { name: '', job: '', side: 'mine' },
@@ -1092,6 +1153,21 @@ export default {
       const rating = Number(this.myRating);
       if (!rating) return null;
       return challengerTiers.find(row => rating >= row.rating) || null;
+    },
+    currentEquipGrade() {
+      return equipGrades.find(g => g.id === this.equipGradeTier) || equipGrades[0];
+    },
+    equipGradeHeadStyle() {
+      return h => {
+        const c = equipGradeColors[h];
+        return c ? { backgroundColor: c.head, color: '#fff' } : {};
+      };
+    },
+    equipGradeCellStyle() {
+      return j => {
+        const c = equipGradeColors[equipTierHeaders[j]];
+        return c ? { backgroundColor: c.cell } : {};
+      };
     },
     boardStyle() {
       return { width: TILE_W * 4 + 'px', height: TILE_H * 4 + 'px' };
@@ -2686,6 +2762,61 @@ h3, h4 {
 .league-table tr.league-current {
   outline: 3px solid #d40000;
   outline-offset: -3px;
+}
+
+/* Equipment Option Grade Styles */
+.equip-grade-container {
+  margin-top: 20px;
+}
+
+.equip-grade-tabs {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
+.equip-grade-tabs button {
+  flex: 1 1 30%;
+  max-width: 150px;
+  font-size: 14px;
+}
+
+.equip-grade-tabs button.active {
+  background-color: #2c3e50;
+  color: white;
+}
+
+.equip-grade-table {
+  table-layout: auto;
+  width: max-content;
+  min-width: 100%;
+  font-size: 12px;
+  white-space: nowrap;
+  margin-bottom: 14px;
+}
+
+.equip-grade-table th, .equip-grade-table td {
+  padding: 6px 8px;
+}
+
+.equip-grade-table .equip-opt-head {
+  background-color: #d9d9d9;
+}
+
+.equip-grade-table .equip-opt-head.weapon {
+  background-color: #c9c9c9;
+}
+
+.equip-grade-table .equip-opt {
+  text-align: left;
+  font-weight: bold;
+  white-space: normal;
+  min-width: 150px;
+}
+
+.equip-grade-table tbody td {
+  font-weight: bold;
 }
 
 .reward-table {
