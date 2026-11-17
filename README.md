@@ -35,3 +35,6 @@ gemini.md를 읽어주세요.
 
 검증: `node tests/relic-calculator.mjs`, `npx eslint src/App.vue src/ReferenceTables.vue src/RelicCalculator.vue src/referenceData.js src/relicCalculator.js`, `npm run build`.
 새 기능은 `src/ReferenceTables.vue`, `src/referenceData.js`, `src/RelicCalculator.vue`, `src/relicCalculator.js`로 분리하고 `src/App.vue`에서 연결합니다.
+
+### 유물 입력 자동 저장
+입력값·현재 토큰·유물 보유량은 `eht.relicPlanner.v1` 키로 이 브라우저에 자동 저장됩니다. 최초에는 월보 각각 4티어 주 3회, 필보 하루 3회, 탐험 하루 2회(당첨 35개 가정), 발굴 하루 24시간, 상점 최대 구매 및 제공된 Lv.3~5 보유량 예시가 적용됩니다. 저장값이 있으면 우선 복원합니다. 탐험 35개는 미확인 가정이므로 게임 보상 확인 후 수정해야 합니다. 보유량은 레벨과 다음 레벨을 위해 모은 개수로 입력합니다.

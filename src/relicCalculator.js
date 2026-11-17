@@ -12,7 +12,7 @@ export function weeklyIncome(s) {
     ['월드보스', boss(s.worldTier, s.worldTimes)],
     ['영웅 월드보스', boss(s.heroTier, s.heroTimes)],
     ['필드보스', bounded(s.field) * 7 * 5],
-    ['탐험', bounded(s.expeditions) * 7 * 0.2 * bounded(s.expeditionTokens, 1, 7, true)],
+    ['탐험', bounded(s.expeditions) * 7 * 0.2 * bounded(s.expeditionTokens, 1, 1000, true)],
     ['유적 발굴', bounded(s.excavationHours, 0, 24) / 2 * 7],
     ['챌린저스 샵', bounded(s.challenger, 0, 2, true) * 100],
     ['승리의 메달 샵', bounded(s.medal, 0, 2, true) * 200 / 2],

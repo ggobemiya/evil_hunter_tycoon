@@ -7,8 +7,10 @@
     </table></div>
     <p><a href="https://cafe.naver.com/evilhuntertycoon/51391" target="_blank" rel="noopener noreferrer">출처: 공식 카페 v1.376 안내</a></p>
 
-    <h3>주간 수급량 · 전체 만렙 예상 기간</h3>
-    <p>플레이 횟수를 입력하세요. 필드보스·탐험은 확률을 반영한 평균 수급량으로 계산합니다.</p>
+    <h3>일주일에 모으는 유물 토큰 · 만렙까지 걸리는 시간</h3>
+    <p>평소 참여 횟수로 앞으로 7일 동안 모을 토큰을 계산합니다. 토큰으로 상자를 구매하면 유물을 얻습니다. 필드보스·탐험은 매번 지급되지 않으므로 평균값으로 표시합니다.</p>
+    <p class="note" role="status">{{ saveMessage }}</p>
+    <p class="note">처음에는 월보 각각 4티어·주 3회, 필보 하루 3회, 탐험 하루 2회와 Lv.3~5 보유량 예시가 적용됩니다. 바꾼 값은 다음 방문에도 유지됩니다. 탐험 보상 35개는 확인 전 가정값입니다. 실제 당첨 보상에 맞춰 수정하세요(공지 기준 1~7개).</p>
     <div class="boss-grid">
       <fieldset v-for="b in bosses" :key="b.tier">
         <legend>{{ b.label }}</legend>
@@ -29,27 +31,27 @@
       </label>
     </div>
     <p class="note">필드보스는 1회당 50% × 10개 = 평균 5개, 탐험은 1회당 20% × 지역별 토큰 수로 계산합니다. 유적 발굴은 2시간당 1개로, 하루 24시간분을 빠짐없이 수령하면 주 84개입니다. 6회분이 쌓이기 전에 수령하고, 놓친 시간은 하루 수령 시간에서 빼 주세요. 승리의 전장 시즌은 14일입니다.</p>
-    <div class="planner-scroll"><table><thead><tr><th>획득처</th><th>주간 예상 토큰</th></tr></thead>
-      <tbody><tr v-for="row in income" :key="row[0]"><td>{{ row[0] }}</td><td>{{ fmt(row[1]) }}개</td></tr></tbody>
+    <div class="planner-scroll"><table><thead><tr><th>획득처</th><th>계산 방법</th><th>일주일에 모으는 토큰</th></tr></thead>
+      <tbody><tr v-for="(row, index) in income" :key="row[0]"><td>{{ row[0] }}</td><td>{{ incomeExplanation[index] }}</td><td>{{ fmt(row[1]) }}개</td></tr></tbody>
     </table></div>
 
     <details>
-      <summary>현재 유물 보유량 입력 · 미입력 시 처음부터 계산</summary>
-      <p>레벨업에 사용한 수량을 포함한 누적 획득량입니다. 레벨을 고르면 해당 레벨의 최소 누적 수량으로 바뀌며, 여분은 누적 수량에 더해 주세요. 최대 271개입니다.</p>
+      <summary>내 유물 레벨과 모은 개수 (자동 저장)</summary>
+      <p>게임 화면처럼 현재 레벨과 다음 레벨을 위해 모은 개수를 입력하세요. 예: Lv.4에서 15 / 25. 레벨을 바꾸면 모은 개수는 0부터 시작합니다.</p>
       <label>모든 유물 레벨 일괄 적용
         <select aria-label="모든 유물 레벨 일괄 적용" @change="setAll($event)"><option value="">선택</option><option v-for="(n, level) in thresholds" :key="level" :value="n">{{ level === 0 ? '미보유' : 'Lv.' + level }}</option></select>
       </label>
-      <div class="planner-scroll"><table><thead><tr><th>유물</th><th>레벨</th><th>누적 획득량</th></tr></thead><tbody>
+      <div class="planner-scroll"><table><thead><tr><th>유물</th><th>레벨</th><th>모은 개수 / 다음 레벨까지</th></tr></thead><tbody>
         <tr v-for="(r, i) in relics" :key="r.name"><td>{{ r.name }}</td><td>
           <select :aria-label="r.name + ' 레벨'" :value="levelOf(owned[i])" @change="owned[i] = thresholds[Number($event.target.value)]">
             <option v-for="(n, level) in thresholds" :key="level" :value="level">{{ level === 0 ? '미보유' : 'Lv.' + level }}</option>
-          </select></td><td><input type="number" min="0" max="271" :aria-label="r.name + ' 누적 획득량'" :value="owned[i]" @input="owned[i] = bounded($event.target.value, 0, 271, true)"></td></tr>
+          </select></td><td><span v-if="levelOf(owned[i]) === 10">만렙</span><template v-else><input type="number" min="0" :max="nextCount(i)" :aria-label="r.name + ' 모은 개수'" :value="owned[i] - thresholds[levelOf(owned[i])]" @input="setExtra(i, $event)"> / {{ nextCount(i) }}</template></td></tr>
       </tbody></table></div>
     </details>
     <label class="wallet">현재 유물 토큰 <input type="number" min="0" max="100000" v-model.number="wallet" aria-label="현재 유물 토큰"></label>
     <div class="results" aria-live="polite">
-      <p><strong>주간 예상 토큰 {{ fmt(weekly) }}개</strong></p>
-      <p>랜덤 상자 기준 주 {{ fmt(weekly / 10) }}개 · 선택 상자 기준 주 {{ fmt(weekly / 50) }}개</p>
+      <p><strong>일주일에 평균 {{ fmt(weekly) }}토큰을 모아요</strong></p>
+      <p>이 토큰을 전부 쓰면 랜덤 유물 약 {{ fmt(weekly / 10) }}개 또는 선택 유물 약 {{ fmt(weekly / 50) }}개에 해당합니다. 두 수량을 동시에 받는 것은 아닙니다.</p>
       <p>전체 만렙까지 필요한 유물: <b>{{ missing.toLocaleString() }}개</b> / 총 8,130개</p>
       <div class="result-grid">
         <div><h4>랜덤 상자로 모으면</h4><strong>{{ days(random.mean) }}</strong><p>모의실험 중간 80%: {{ days(random.low) }} ~ {{ days(random.high) }}</p><p>예상 필요 토큰 {{ fmt(random.mean) }}개</p></div>
@@ -64,23 +66,48 @@
 import { relics, relicLevelUp } from './relicData';
 import { tokenSources } from './referenceData';
 import { bounded, weeklyIncome, estimateRandom, daysNeeded, MAX_COPIES } from './relicCalculator';
+import { normalizeState, loadState, saveState } from './relicStorage';
 const thresholds = [0, 1];
 relicLevelUp.forEach(row => thresholds.push(thresholds[thresholds.length - 1] + row.count));
 export default {
-  data: () => ({ relics, tokenSources, thresholds, wallet: 0, owned: relics.map(() => 0),
-    settings: { worldTier: 5, heroTier: 5, worldTimes: 0, heroTimes: 0, field: 0, expeditions: 0, expeditionTokens: 1, excavationHours: 24, challenger: 2, medal: 2, extra: 0 },
+  data: () => ({ relics, tokenSources, thresholds, ...normalizeState(null, relics.map(r => r.name)), saveMessage: '',
     bosses: [{ label: '일반 월드보스', tier: 'worldTier', times: 'worldTimes' }, { label: '영웅 월드보스', tier: 'heroTier', times: 'heroTimes' }],
     fields: [
       { key: 'field', label: '필드보스 보상 횟수 / 일' },
       { key: 'expeditions', label: '탐험 클리어 횟수 / 일' },
-      { key: 'expeditionTokens', label: '탐험 당첨 시 토큰 수', min: 1, max: 7 },
+      { key: 'expeditionTokens', label: '탐험 당첨 시 받는 토큰 (가정값)', min: 1, max: 1000 },
       { key: 'excavationHours', label: '유적 발굴 수령 시간분 / 일', max: 24 },
       { key: 'challenger', label: '챌린저스 샵 구매 / 주', max: 2 },
       { key: 'medal', label: '승리의 메달 샵 구매 / 시즌', max: 2 },
       { key: 'extra', label: '기타 토큰 / 주 (보너스샵 등)' },
     ],
   }),
+  created() {
+    try {
+      const state = loadState(window.localStorage, this.relics.map(r => r.name));
+      this.settings = state.settings; this.owned = state.owned; this.wallet = state.wallet;
+      this.persist();
+    } catch { this.saveMessage = '브라우저 저장을 사용할 수 없습니다. 이번 입력은 새로고침하면 사라집니다.'; }
+  },
+  watch: {
+    settings: { deep: true, handler() { this.persist(); } },
+    owned: { deep: true, handler() { this.persist(); } },
+    wallet() { this.persist(); },
+  },
   computed: {
+    incomeExplanation() {
+      const s = this.settings;
+      return [
+        `주 ${s.worldTimes}회 × ${45 - 5 * s.worldTier}개`,
+        `주 ${s.heroTimes}회 × ${45 - 5 * s.heroTier}개`,
+        `하루 ${s.field}회 × 7일 × 50% × 10개`,
+        `하루 ${s.expeditions}회 × 7일 × 20% × ${s.expeditionTokens}개`,
+        `하루 ${s.excavationHours}시간 ÷ 2시간 × 7일`,
+        `주 ${s.challenger}회 구매 × 100개`,
+        `2주에 ${s.medal}회 구매 × 200개 ÷ 2`,
+        '직접 입력한 일주일 추가 토큰',
+      ];
+    },
     income() { return weeklyIncome(this.settings); },
     weekly() { return this.income.reduce((sum, row) => sum + row[1], 0); },
     missing() { return this.owned.reduce((sum, n) => sum + MAX_COPIES - bounded(n, 0, MAX_COPIES, true), 0); },
@@ -88,6 +115,13 @@ export default {
   },
   methods: {
     bounded,
+    persist() {
+      let ok = false;
+      try { ok = saveState(window.localStorage, this, this.relics.map(r => r.name)); } catch { /* Storage may be disabled. */ }
+      this.saveMessage = ok ? '자동 저장됨 · 이 브라우저에서 다시 열면 입력값이 복원됩니다. 브라우저 데이터를 삭제하면 초기화됩니다.' : '자동 저장에 실패했습니다. 이번 입력은 새로고침하면 사라질 수 있습니다.';
+    },
+    nextCount(i) { const level = this.levelOf(this.owned[i]); return level < 10 ? thresholds[level + 1] - thresholds[level] : 0; },
+    setExtra(i, event) { const base = thresholds[this.levelOf(this.owned[i])]; this.owned[i] = base + bounded(event.target.value, 0, this.nextCount(i), true); },
     set(key, event, min, max) { const n = bounded(event.target.value, min, max, true); this.settings[key] = n; event.target.value = n; },
     setAll(event) { if (event.target.value !== '') this.owned = this.relics.map(() => Number(event.target.value)); },
     levelOf(n) { return thresholds.reduce((level, count, i) => n >= count ? i : level, 0); },
