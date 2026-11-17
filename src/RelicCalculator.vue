@@ -28,7 +28,7 @@
         <input :id="'income-' + f.key" type="number" :min="f.min || 0" :max="f.max || 100000" step="1" :value="settings[f.key]" @input="set(f.key, $event, f.min || 0, f.max || 100000)">
       </label>
     </div>
-    <p class="note">탐험은 해당 지역에서 당첨 시 받는 토큰 수(1~7개)를 입력합니다. 승리의 메달 샵은 입력한 시즌 일수로 주간 환산합니다. 초기 참여 횟수는 모두 0입니다.</p>
+    <p class="note">필드보스는 1회당 50% × 10개 = 평균 5개, 탐험은 1회당 20% × 지역별 토큰 수로 계산합니다. 유적 발굴은 2시간당 1개로, 하루 24시간분을 빠짐없이 수령하면 주 84개입니다. 6회분이 쌓이기 전에 수령하고, 놓친 시간은 하루 수령 시간에서 빼 주세요. 승리의 전장 시즌은 14일입니다.</p>
     <div class="planner-scroll"><table><thead><tr><th>획득처</th><th>주간 예상 토큰</th></tr></thead>
       <tbody><tr v-for="row in income" :key="row[0]"><td>{{ row[0] }}</td><td>{{ fmt(row[1]) }}개</td></tr></tbody>
     </table></div>
@@ -68,16 +68,15 @@ const thresholds = [0, 1];
 relicLevelUp.forEach(row => thresholds.push(thresholds[thresholds.length - 1] + row.count));
 export default {
   data: () => ({ relics, tokenSources, thresholds, wallet: 0, owned: relics.map(() => 0),
-    settings: { worldTier: 5, heroTier: 5, worldTimes: 0, heroTimes: 0, field: 0, expeditions: 0, expeditionTokens: 1, excavation: 0, challenger: 0, medal: 0, seasonDays: 28, extra: 0 },
+    settings: { worldTier: 5, heroTier: 5, worldTimes: 0, heroTimes: 0, field: 0, expeditions: 0, expeditionTokens: 1, excavationHours: 24, challenger: 2, medal: 2, extra: 0 },
     bosses: [{ label: '일반 월드보스', tier: 'worldTier', times: 'worldTimes' }, { label: '영웅 월드보스', tier: 'heroTier', times: 'heroTimes' }],
     fields: [
       { key: 'field', label: '필드보스 보상 횟수 / 일' },
       { key: 'expeditions', label: '탐험 클리어 횟수 / 일' },
       { key: 'expeditionTokens', label: '탐험 당첨 시 토큰 수', min: 1, max: 7 },
-      { key: 'excavation', label: '유적 발굴 보상 회분 / 일' },
+      { key: 'excavationHours', label: '유적 발굴 수령 시간분 / 일', max: 24 },
       { key: 'challenger', label: '챌린저스 샵 구매 / 주', max: 2 },
       { key: 'medal', label: '승리의 메달 샵 구매 / 시즌', max: 2 },
-      { key: 'seasonDays', label: '시즌 길이 (일, 직접 조정)', min: 1, max: 365 },
       { key: 'extra', label: '기타 토큰 / 주 (보너스샵 등)' },
     ],
   }),
