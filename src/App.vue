@@ -32,7 +32,12 @@
     <button :class="{ active: activeTab === 'equipGrade' }" @click="activeTab = 'equipGrade'">장비 옵션 등급표</button>
     <button :class="{ active: activeTab === 'relic' }" @click="activeTab = 'relic'">유물</button>
     <button :class="{ active: activeTab === 'unique' }" @click="activeTab = 'unique'">유니크</button>
+    <button :class="{ active: activeTab === 'tempering' }" @click="activeTab = 'tempering'">담금질 옵션</button>
+    <button :class="{ active: activeTab === 'personalities' }" @click="activeTab = 'personalities'">성격</button>
   </div>
+
+  <ReferenceTables v-show="activeTab === 'tempering'" kind="tempering" />
+  <ReferenceTables v-show="activeTab === 'personalities'" kind="personalities" />
 
   <!-- Attack Speed Calculator -->
   <div v-show="activeTab === 'attack'">
@@ -862,6 +867,7 @@
   <!-- Relic -->
   <div v-show="activeTab === 'relic'">
     <div class="relic-container">
+      <RelicCalculator />
       <h3>유물 버프 효과</h3>
       <p class="rune-note">모든 유물의 수집 확률은 1/30 입니다. 버프 수치는 유물 레벨 1 ~ 10 순서입니다.</p>
       <div class="rune-scroll">
@@ -989,6 +995,8 @@ import { challengerTiers, challengerGroups, rankingRewards, participationRewards
 import { equipGrades, equipTierHeaders, equipGradeColors } from './equipGradeData';
 import { relics, relicLevelUp } from './relicData';
 import { uniques, uniqueModes, uniqueTimeline } from './uniqueData';
+import ReferenceTables from './ReferenceTables.vue';
+import RelicCalculator from './RelicCalculator.vue';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
 
@@ -1009,6 +1017,7 @@ const JOB_COLORS = {
 
 export default {
   name: 'App',
+  components: { ReferenceTables, RelicCalculator },
     data() {
       return {
               // Common
@@ -1030,6 +1039,8 @@ export default {
                 equipGrade: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 relic: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 unique: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                tempering: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                personalities: [{ role: '제작', name: 'Stella 꼬뱀별' }],
               },
         // Attack Speed Calculator
         job: '',

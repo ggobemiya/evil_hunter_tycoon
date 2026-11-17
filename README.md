@@ -20,3 +20,18 @@ gemini.md를 읽어주세요.
     ```bash
     git push
     ```
+## 정보 탭 및 유물 계산기 (2026-11-17)
+
+- 담금질 옵션: v1.381 사전 안내의 35종 옵션, 중첩 여부, 확률, SSS/L 범위.
+- 성격: 헌터 성격 33종과 효과.
+- 유물: 기존 버프/레벨업 표에 토큰 획득처와 주간 수급·전체 만렙 계산기 추가.
+- 일반/영웅 월드보스 티어는 각각 숫자 입력과 1~5티어 슬라이더로 조절합니다.
+- 참여 횟수는 초기 0이며, 시즌 길이 28일은 수정 가능한 계산용 초기값입니다.
+- 유물 만렙은 종류당 271개(최초 활성화 1개 포함), 30종 총 8,130개입니다.
+- 랜덤 상자는 5개 50토큰 / 25개 250토큰, 선택 상자는 1개 50토큰입니다(사용자 제공 게임 화면).
+- 랜덤 기간은 1/30 균등 추첨 256회 모의실험의 평균과 중간 80% 범위입니다. 초과 유물은 즉시 5토큰으로 교환합니다. 평균 수급량으로 일수를 환산하므로 보상 일정, 실제 획득 운, 묶음 구매 잔여 상자에 따른 오차가 있습니다.
+- 선택 상자는 부족한 유물만 선택합니다. 현재 누적 획득량에는 레벨업에 소비한 수량도 포함합니다.
+- 정보 출처: 공식 카페 게시글 51803(담금질), 51391(수급), 51395(유물), 16163(성격).
+
+검증: `node tests/relic-calculator.mjs`, `npx eslint src/App.vue src/ReferenceTables.vue src/RelicCalculator.vue src/referenceData.js src/relicCalculator.js`, `npm run build`.
+새 기능은 `src/ReferenceTables.vue`, `src/referenceData.js`, `src/RelicCalculator.vue`, `src/relicCalculator.js`로 분리하고 `src/App.vue`에서 연결합니다.
