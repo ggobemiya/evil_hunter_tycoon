@@ -34,10 +34,12 @@
     <button :class="{ active: activeTab === 'unique' }" @click="activeTab = 'unique'">유니크</button>
     <button :class="{ active: activeTab === 'tempering' }" @click="activeTab = 'tempering'">담금질 옵션</button>
     <button :class="{ active: activeTab === 'personalities' }" @click="activeTab = 'personalities'">성격</button>
+    <button :class="{ active: activeTab === 'jobSkills' }" @click="activeTab = 'jobSkills'">직업 / 스킬</button>
   </div>
 
   <ReferenceTables v-show="activeTab === 'tempering'" kind="tempering" />
   <ReferenceTables v-show="activeTab === 'personalities'" kind="personalities" />
+  <JobSkills v-show="activeTab === 'jobSkills'" />
 
   <!-- Attack Speed Calculator -->
   <div v-show="activeTab === 'attack'">
@@ -996,6 +998,7 @@ import { equipGrades, equipTierHeaders, equipGradeColors } from './equipGradeDat
 import { relics, relicLevelUp } from './relicData';
 import { uniques, uniqueModes, uniqueTimeline } from './uniqueData';
 import ReferenceTables from './ReferenceTables.vue';
+import JobSkills from './JobSkills.vue';
 import RelicCalculator from './RelicCalculator.vue';
 
 const BOX_SOURCES = ['반짝A', '반짝B', '촌비'];
@@ -1017,7 +1020,7 @@ const JOB_COLORS = {
 
 export default {
   name: 'App',
-  components: { ReferenceTables, RelicCalculator },
+  components: { ReferenceTables, RelicCalculator, JobSkills },
     data() {
       return {
               // Common
@@ -1041,6 +1044,7 @@ export default {
                 unique: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 tempering: [{ role: '제작', name: 'Stella 꼬뱀별' }],
                 personalities: [{ role: '제작', name: 'Stella 꼬뱀별' }],
+                jobSkills: [{ role: '제작', name: 'Stella 꼬뱀별' }],
               },
         // Attack Speed Calculator
         job: '',
