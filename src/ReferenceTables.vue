@@ -15,17 +15,20 @@
     </template>
     <template v-else>
       <h3>헌터 성격 33종</h3>
+      <div class="personality-legend" aria-label="성격 색상 안내">
+        <span v-for="(label, category) in personalityCategories" :key="category" :class="'personality-' + category">{{ label }}</span>
+      </div>
       <div class="reference-scroll"><table>
-        <thead><tr><th>번호</th><th>성격</th><th>효과</th></tr></thead>
-        <tbody><tr v-for="(p, i) in personalities" :key="p.name"><td>{{ i + 1 }}</td><td>{{ p.name }}</td><td>{{ p.effect }}</td></tr></tbody>
+        <thead><tr><th>번호</th><th>성격</th><th>효과</th><th>분류</th></tr></thead>
+        <tbody><tr v-for="(p, i) in personalities" :key="p.name"><td>{{ i + 1 }}</td><td :class="'personality-' + p.category">{{ p.name }}</td><td :class="'personality-' + p.category">{{ p.effect }}</td><td :class="'personality-' + p.category">{{ personalityCategories[p.category] }}</td></tr></tbody>
       </table></div>
       <a href="https://cafe.naver.com/evilhuntertycoon/16163" target="_blank" rel="noopener noreferrer">출처: 하리멍 님의 헌터 성격 정리</a>
     </template>
   </section>
 </template>
 <script>
-import { temperingOptions, personalities } from './referenceData';
-export default { props: { kind: { type: String, required: true } }, data: () => ({ temperingOptions, personalities }) };
+import { temperingOptions, personalities, personalityCategories } from './referenceData';
+export default { props: { kind: { type: String, required: true } }, data: () => ({ temperingOptions, personalities, personalityCategories }) };
 </script>
 <style scoped>
 .reference-info { max-width: 1100px; margin: 24px auto; padding: 0 12px; text-align: left; }
@@ -37,4 +40,9 @@ th { background: #eef3f8; white-space: nowrap; }
 tbody tr:nth-child(even) { background: #fafafa; }
 td:not(:first-child) { min-width: 65px; }
 a { color: #315f98; }
+.personality-legend { display: flex; flex-wrap: wrap; gap: 8px 20px; font-weight: 600; }
+.personality-combat { color: #14532d; font-weight: 600; }
+.personality-utility { color: #4f7f3f; }
+.personality-negative { color: #b42318; }
+.personality-neutral { color: #2c3e50; }
 </style>

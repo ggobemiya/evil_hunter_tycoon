@@ -47,6 +47,13 @@ export const temperingOptions = [
 ];
 
 // 출처: https://cafe.naver.com/evilhuntertycoon/16163
+// 사용자 분류: 능력치 상승과 생활·편의 효과를 구분합니다.
+const combatPersonalities = new Set(['힘이 쎈', '달리기가 빠른', '날쌘돌이', '리더쉽이 강한', '영웅심리', '금강불괴', '쏜살같은', '샤프한']);
+const utilityPersonalities = new Set(['허술한', '부유한', '스마일', '빼빼 마른', '활력이 넘친', '타짜', '깡따구']);
+const negativePersonalities = new Set(['허약한', '느림보', '둔한', '깐깐한', '고문관', '다크서클', '뚱뚱한', '우울한', '겁쟁이', '굼뜬', '둔탁한']);
+export const personalityCategories = {
+  combat: '능력치 상승', utility: '생활·편의 효과', negative: '부정적 효과', neutral: '능력치 효과 없음',
+};
 export const personalities = [
   ['힘이 쎈', '공격력 +10%'], ['허약한', '공격력 -10%'],
   ['달리기가 빠른', '이동속도 +10%'], ['느림보', '이동속도 -10%'],
@@ -65,7 +72,9 @@ export const personalities = [
   ['샤프한', '치명타 +3%'], ['둔탁한', '치명타 -3%'],
   ['평범한', '특별한 효과 없음'], ['예의없는', '효과 없음'],
   ['응큼한', '효과 없음'], ['막장', '효과 없음'], ['키보드워리어', '효과 없음'],
-].map(([name, effect]) => ({ name, effect }));
+].map(([name, effect]) => ({ name, effect,
+  category: combatPersonalities.has(name) ? 'combat' : utilityPersonalities.has(name) ? 'utility' : negativePersonalities.has(name) ? 'negative' : 'neutral',
+}));
 
 export const tokenSources = [
   ['필드보스', '모든 난이도에서 보상 수령 시 50% 확률로 10개'],
